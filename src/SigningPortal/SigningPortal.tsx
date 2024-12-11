@@ -1,8 +1,16 @@
 import React, { useEffect, useState } from "react"
 import useBackendAPI from "../api/useBackendAPI"
-import { createClient, PolkadotClient, Binary, UnsafeTransaction, UnsafeApi, HexString } from "polkadot-api"
+import {
+  createClient,
+  PolkadotClient,
+  Binary,
+  UnsafeTransaction,
+  UnsafeApi,
+  HexString,
+  PolkadotSigner,
+} from "polkadot-api"
 import { getWsProvider } from "polkadot-api/ws-provider/web"
-
+import { useSelectedAccount } from "@/context"
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, reportError, terminate } = useBackendAPI();
 
@@ -14,7 +22,10 @@ export const SigningPortal: React.FC = () => {
   const [rpc, setRpc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [response, setResponse] = useState<Record<string, unknown> | null>(null);
+  const [response, setResponse] = useState<string | null>(null);
+
+  const selectedAccount = useSelectedAccount()
+
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -33,10 +44,10 @@ export const SigningPortal: React.FC = () => {
         let binaryFromBytes = Binary.fromBytes(result.call_data);
         let hex: HexString = binaryFromBytes.asHex();
         let callData = Binary.fromHex(hex);
-
         setCallData(callData);
         const tx = await api.txFromCallData(callData);
         setTx(tx);
+        console.log(tx.decodedCall)
       } catch (err) {
         console.log(err);
         setError((err as Error).message);
@@ -88,16 +99,27 @@ export const SigningPortal: React.FC = () => {
     }
   };
 
+  const sign = async () => {
+    const payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+
+    let response = await submitData(payload?.toString());
+    setResponse(response);
+  }
+
   // Render the UI
   return (
     <div style={{ padding: "20px" }}>
-      <h1>Backend API Integration</h1>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
+      <div>Account: {selectedAccount.address}</div>
       <div>
         <h2>Chain RPC:</h2>
         {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+
+        <h2>Extrinsic Info:</h2>
+        {tx ? <div><p>Pallet: {tx.decodedCall.type}</p>
+          <p>Dispatchable: {tx?.decodedCall.value.type}</p></div> : <p></p>}
       </div>
 
       <div style={{ marginTop: "20px" }}>
@@ -111,6 +133,8 @@ export const SigningPortal: React.FC = () => {
           Terminate
         </button>
       </div>
+
+      <button onClick={async () => await sign()}>Sign</button>
 
       <div style={{ marginTop: "20px" }}>
         <h2>Response:</h2>

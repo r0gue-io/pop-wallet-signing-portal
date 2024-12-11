@@ -6,7 +6,7 @@ export interface TransactionData {
 }
 
 // Define types for API responses
-type SubmitResponse = Record<string, unknown>;
+type SubmitResponse = string;
 type ErrorReportResponse = Record<string, unknown>;
 type TerminateResponse = Record<string, unknown>;
 
@@ -21,7 +21,7 @@ const useBackendAPI = () => {
   }, []);
 
   const submitData = useCallback(
-    async (data: Record<string, unknown>): Promise<SubmitResponse> => {
+    async (data: string | undefined): Promise<SubmitResponse> => {
       const response = await fetch(`${BASE_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
