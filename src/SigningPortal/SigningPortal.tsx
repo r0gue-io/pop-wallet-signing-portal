@@ -25,7 +25,6 @@ export const SigningPortal: React.FC = () => {
   const [rpc, setRpc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [response, setResponse] = useState<string | null>(null);
   const [close, setClose] = useState<string | null>(null);
 
   const selectedAccount = useSelectedAccount()
@@ -100,19 +99,16 @@ export const SigningPortal: React.FC = () => {
         {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
 
         <div className="font-semibold">Extrinsic Info:</div>
-        {tx ? <div><span style={{color: "gray"}}>Pallet: </span>{tx.decodedCall.type} <br/>
-          <span style={{color:"gray"}}>Dispatchable:</span> {tx?.decodedCall.value.type}</div> : <p></p>}
+        {tx ? <div><span className="text-gray-500">Pallet: </span>{tx.decodedCall.type} <br/>
+          <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}</div> : <p></p>}
       </div>
 
 
       <Button onClick={async () => await sign()}>Sign</Button>
-      <Button onClick={handleTerminate} className="m-2" style={{backgroundColor:"red"}}>
+      <Button onClick={handleTerminate} className="m-2 col bg-red-500" >
         Terminate
       </Button>
 
-      <div>
-        {response ? <p>{response}</p> : <p></p>}
-      </div>
       {close ? <CloseTabModal message={close}/> : <></>}
     </div>
   );
