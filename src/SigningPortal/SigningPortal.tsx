@@ -13,6 +13,7 @@ import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
 import { getWsProvider } from "polkadot-api/ws-provider/web"
 import { useSelectedAccount } from "@/context"
 import { Button } from "@/components/ui/button.tsx"
+import { CloseTabModal } from "@/CloseTabModal"
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
@@ -25,6 +26,7 @@ export const SigningPortal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [response, setResponse] = useState<string | null>(null);
+  const [close, setClose] = useState<string | null>(null);
 
   const selectedAccount = useSelectedAccount()
 
@@ -66,6 +68,7 @@ export const SigningPortal: React.FC = () => {
     setError(null);
     try {
       await terminate();
+      setClose("Pop CLI server closed. You may now close this tab.");
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -78,7 +81,7 @@ export const SigningPortal: React.FC = () => {
 
     let response = await submitData(payload?.toString());
     if (response.status === "success") {
-      setResponse("Signed payload successfully sent to Pop CLI. Server will close now.")
+      setClose("Transaction submitted to Pop CLI server. You may now close this tab safely and go back to your terminal.");
     } else {
       setError("An error occurred submitting the payload");
     }
@@ -110,6 +113,7 @@ export const SigningPortal: React.FC = () => {
       <div>
         {response ? <p>{response}</p> : <p></p>}
       </div>
+      {close ? <CloseTabModal message={close}/> : <></>}
     </div>
   );
 };
