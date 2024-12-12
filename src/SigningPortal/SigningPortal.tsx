@@ -14,7 +14,7 @@ import { getWsProvider } from "polkadot-api/ws-provider/web"
 import { useSelectedAccount } from "@/context"
 import { Button } from "@/components/ui/button.tsx"
 export const SigningPortal: React.FC = () => {
-  const { fetchPayload, submitData } = useBackendAPI();
+  const { fetchPayload, submitData, terminate } = useBackendAPI();
 
   const [_client, setClient] = useState<PolkadotClient | null>(null);
   const [_api, setApi] = useState<UnsafeApi<any> | null>(null);
@@ -61,39 +61,11 @@ export const SigningPortal: React.FC = () => {
     loadPayload();
   }, [fetchPayload]);
 
-  // Handlers for API calls
-  // const handleSubmit = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const result = await submitData({ key: "value" });
-  //     setResponse(result);
-  //   } catch (err) {
-  //     setError((err as Error).message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
-  // const handleErrorReport = async () => {
-  //   setLoading(true);
-  //   setError(null);
-  //   try {
-  //     const result = await reportError({ error: "Something went wrong" });
-  //     setResponse(result);
-  //   } catch (err) {
-  //     setError((err as Error).message);
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-
   const handleTerminate = async () => {
     setLoading(true);
     setError(null);
     try {
-      // const result = await terminate();
-      // setResponse(result);
+      await terminate();
     } catch (err) {
       setError((err as Error).message);
     } finally {
