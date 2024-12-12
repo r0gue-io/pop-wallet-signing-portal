@@ -5,8 +5,12 @@ export interface TransactionData {
   call_data: Uint8Array;
 }
 
+export interface Response {
+  status: string
+}
+
 // Define types for API responses
-type SubmitResponse = string;
+type SubmitResponse = Response;
 type ErrorReportResponse = Record<string, unknown>;
 type TerminateResponse = Record<string, unknown>;
 

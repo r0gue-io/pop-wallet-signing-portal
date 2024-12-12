@@ -6,7 +6,7 @@ import {SigningPortal} from "./SigningPortal"
 export default function LoginForm() {
   return (
     <div className="flex items-center justify-center mt-6">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-xl">
         <CardHeader>
           <CardTitle className="text-2xl text-center">
            Pop Signing Portal
@@ -15,7 +15,9 @@ export default function LoginForm() {
         <CardContent className="grid gap-4">
           <ExtensionProvider>
             <AccountProvider>
-              {<SigningPortal/>}
+              <div className="overflow-auto break-words whitespace-pre-wrap">
+                <SigningPortal />
+              </div>
             </AccountProvider>
           </ExtensionProvider>
         </CardContent>

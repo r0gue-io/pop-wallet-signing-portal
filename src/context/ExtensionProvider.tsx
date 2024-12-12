@@ -72,7 +72,7 @@ export const ExtensionProvider: React.FC<PropsWithChildren> = ({
 
   return (
     <>
-      <Label>Click on the extension name to (dis)connect it:</Label>
+      <Label className="text-center">Click on the extension name to (dis)connect it:</Label>
       <TabsList>
         {availableExtensions.map((extensionName) => (
           <TabsTrigger
