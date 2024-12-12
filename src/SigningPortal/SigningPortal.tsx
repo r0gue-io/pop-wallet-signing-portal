@@ -136,7 +136,7 @@ export const SigningPortal: React.FC = () => {
       </Button>
 
       <div>
-        {response ? <p>{JSON.stringify(response, null, 2)}</p> : <p></p>}
+        {response ? <p>{response}</p> : <p></p>}
       </div>
     </div>
   );
