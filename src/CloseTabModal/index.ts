@@ -1,1 +1,0 @@
-export { CloseTabModal } from "./CloseTabModal"
