@@ -1,3 +1,5 @@
+import { Button } from "@/components/ui/button.tsx"
+
 interface ModalProps {
   isOpen: boolean; // Controls whether the modal is shown
   title: string; // Title of the modal
@@ -6,6 +8,7 @@ interface ModalProps {
   onCancel?: () => void; // Optional cancel action
   confirmText?: string; // Text for the confirm button
   cancelText?: string; // Text for the cancel button
+  confirmClass?: string;
   showCancelButton?: boolean; // Whether to show a cancel button
 }
 
@@ -17,6 +20,7 @@ export const Modal: React.FC<ModalProps> = ({
                                               onCancel,
                                               confirmText = "Confirm",
                                               cancelText = "Cancel",
+                                              confirmClass= "px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600",
                                               showCancelButton = true,
                                             }) => {
   if (!isOpen) return null;
@@ -28,19 +32,19 @@ export const Modal: React.FC<ModalProps> = ({
         <p className="text-sm text-gray-600 text-center mb-6">{message}</p>
         <div className="flex justify-center gap-4">
           {showCancelButton && (
-            <button
+            <Button
               onClick={onCancel}
               className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
             >
               {cancelText}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+            className={confirmClass}
           >
             {confirmText}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

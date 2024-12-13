@@ -31,6 +31,7 @@ export const SigningPortal: React.FC = () => {
     title: string;
     message: string;
     confirmText?: string;
+    confirmClass?: string;
     cancelText?: string;
     showCancelButton?: boolean;
     onConfirm?: () => void;
@@ -122,6 +123,7 @@ export const SigningPortal: React.FC = () => {
           title: "Signing Successful",
           message: "Pop CLI will submit the signed transaction. You can close the tab now.",
           confirmText: "Close Tab",
+          confirmClass: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-300",
           showCancelButton: false,
           onConfirm: () => window.close(),
         });
@@ -165,6 +167,7 @@ export const SigningPortal: React.FC = () => {
         title={modalConfig.title}
         message={modalConfig.message}
         confirmText={modalConfig.confirmText}
+        confirmClass={modalConfig.confirmClass}
         cancelText={modalConfig.cancelText}
         showCancelButton={modalConfig.showCancelButton}
         onConfirm={modalConfig.onConfirm}
