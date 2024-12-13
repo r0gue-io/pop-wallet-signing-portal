@@ -13,7 +13,7 @@ import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
 import { getWsProvider } from "polkadot-api/ws-provider/web"
 import { useSelectedAccount } from "@/context"
 import { Button } from "@/components/ui/button.tsx"
-import { CloseTabModal } from "@/CloseTabModal"
+import { Modal } from "@/Modal"
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
@@ -25,7 +25,21 @@ export const SigningPortal: React.FC = () => {
   const [rpc, setRpc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [close, setClose] = useState<string | null>(null);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    confirmText?: string;
+    confirmClass?: string;
+    cancelText?: string;
+    showCancelButton?: boolean;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  }>({
+    title: "",
+    message: "",
+  });
 
   const selectedAccount = useSelectedAccount()
 
@@ -53,7 +67,7 @@ export const SigningPortal: React.FC = () => {
         console.log(tx.decodedCall)
       } catch (err) {
         console.log(err);
-        setError((err as Error).message);
+        setError("Failed to connect to server or fetch data");
       } finally {
         setLoading(false);
       }
@@ -65,24 +79,62 @@ export const SigningPortal: React.FC = () => {
   const handleTerminate = async () => {
     setLoading(true);
     setError(null);
-    try {
-      await terminate();
-      setClose("Pop CLI server closed. You may now close this tab.");
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setLoading(false);
-    }
+
+    setModalConfig({
+      title: "Cancel Signing",
+      message: "Are you sure you want to cancel the signing? This will close the server and tab.",
+      confirmText: "Yes, Cancel",
+      cancelText: "Go Back",
+      onConfirm: async () => {
+        try {
+          await terminate();
+          window.close()
+        } catch (err) {
+          console.log(err);
+          setError("Failed to terminate the server. Is it already closed?");
+        } finally {
+          setLoading(false);
+        }
+        console.log("Server closed.");
+        setIsModalOpen(false);
+      },
+      onCancel: () => setIsModalOpen(false),
+    });
+    setIsModalOpen(true);
+
+
   };
 
   const sign = async () => {
+    if (!tx) {
+      setError("No transaction loaded.");
+      return;
+    } else if (!selectedAccount) {
+      setError("No account selected.");
+      return;
+    }
+
     const payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
 
-    let response = await submitData(payload?.toString());
-    if (response.status === "success") {
-      setClose("Transaction submitted to Pop CLI server. You may now close this tab safely and go back to your terminal.");
-    } else {
-      setError("An error occurred submitting the payload");
+    try {
+      let response = await submitData(payload?.toString());
+      if (response.status === "success") {
+        setModalConfig({
+          title: "Signing Successful",
+          message: "Pop CLI will submit the signed transaction. You can close the tab now.",
+          confirmText: "Close Tab",
+          confirmClass: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-300",
+          showCancelButton: false,
+          onConfirm: () => window.close(),
+        });
+        setIsModalOpen(true);
+      } else {
+        setError("An error occurred submitting the payload");
+      }
+    } catch(err) {
+      setError("Unable to submit. Is the server closed?")
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -104,12 +156,23 @@ export const SigningPortal: React.FC = () => {
       </div>
 
 
-      <Button onClick={async () => await sign()}>Sign</Button>
-      <Button onClick={handleTerminate} className="m-2 col bg-red-500" >
-        Terminate
+      <Button onClick={async () => await sign()} className="m-2 col bg-blue-600">Sign</Button>
+      <Button onClick={handleTerminate}   className="m-1 px-2 py-1 text-sm bg-gray-400 hover:bg-red-500"
+      >
+       Cancel
       </Button>
 
-      {close ? <CloseTabModal message={close}/> : <></>}
+      <Modal
+        isOpen={isModalOpen}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        confirmText={modalConfig.confirmText}
+        confirmClass={modalConfig.confirmClass}
+        cancelText={modalConfig.cancelText}
+        showCancelButton={modalConfig.showCancelButton}
+        onConfirm={modalConfig.onConfirm}
+        onCancel={modalConfig.onCancel}
+      />
     </div>
   );
 };
