@@ -119,8 +119,8 @@ export const SigningPortal: React.FC = () => {
       let response = await submitData(payload?.toString());
       if (response.status === "success") {
         setModalConfig({
-          title: "Submission Successful",
-          message: "You can close the tab now.",
+          title: "Signing Successful",
+          message: "Pop CLI will submit the signed transaction. You can close the tab now.",
           confirmText: "Close Tab",
           showCancelButton: false,
           onConfirm: () => window.close(),
