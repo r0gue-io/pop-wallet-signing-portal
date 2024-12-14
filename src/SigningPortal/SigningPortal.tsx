@@ -7,13 +7,14 @@ import {
   UnsafeTransaction,
   UnsafeApi,
   HexString,
-  PolkadotSigner,
+  PolkadotSigner, Enum,
 } from "polkadot-api"
 import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
 import { getWsProvider } from "polkadot-api/ws-provider/web"
 import { useSelectedAccount } from "@/context"
 import { Button } from "@/components/ui/button.tsx"
 import { Modal } from "@/Modal"
+import { DryRun } from "@/DryRun"
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
@@ -25,6 +26,9 @@ export const SigningPortal: React.FC = () => {
   const [rpc, setRpc] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isContract, setIsContract] = useState<boolean>(false);
+  const [dryRunResult, setDryRunResult] = useState<any | null>(null);
+  const [useGasEstimates, setUseGasEstimates] = useState<boolean>(false);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
@@ -64,6 +68,7 @@ export const SigningPortal: React.FC = () => {
         setCallData(callData);
         const tx = await api.txFromCallData(callData);
         setTx(tx);
+        setIsContract(tx.decodedCall.type === "Contracts");
         console.log(tx.decodedCall)
       } catch (err) {
         console.log(err);
@@ -104,6 +109,28 @@ export const SigningPortal: React.FC = () => {
 
 
   };
+
+  const dryRun = async () => {
+    // let inkClient = getInkClient(withPolkadotSdkCompat(getWsProvider(rpc)));
+    console.log("***here");
+    let code = tx?.decodedCall.value.value.code;
+    let data = tx?.decodedCall.value.value.data;
+    let salt = Binary.fromText("salt 100");
+    console.log("***before instantiate");
+
+    // @ts-ignore
+    let result = await _api?.apis.ContractsApi.instantiate(
+      selectedAccount.address, // origin
+      0n, // value
+      undefined, // gasLimit
+      undefined, // storagedepositlimit
+      Enum("Upload", code),
+      data,
+      salt,
+    )
+    setDryRunResult(result);
+    console.log(result)
+  }
 
   const sign = async () => {
     if (!tx) {
@@ -155,7 +182,15 @@ export const SigningPortal: React.FC = () => {
           <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}</div> : <p></p>}
       </div>
 
+      {isContract && dryRunResult &&
+        <div>
+          <DryRun dryRunResult={dryRunResult} useGasEstimates={useGasEstimates} setUseGasEstimates={setUseGasEstimates}></DryRun>
 
+        </div>
+      }
+
+
+      <Button onClick={async () => await dryRun()} className="m-2 col bg-blue-600">dry run</Button>
       <Button onClick={async () => await sign()} className="m-2 col bg-blue-600">Sign</Button>
       <Button onClick={handleTerminate}   className="m-1 px-2 py-1 text-sm bg-gray-400 hover:bg-red-500"
       >
