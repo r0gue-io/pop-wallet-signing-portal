@@ -3,14 +3,15 @@
 
 import { Binary } from "polkadot-api";
 
-interface CodeUploadResult {
-  code_hash?: Binary; // This will be present if success is true
-  deposit?: bigint; // This will be present if success is true
-  type?: string; // Type of error if success is false
+export interface CodeUploadResult {
+  type?: string;
+  success?: boolean,
   value?: {
-    type: string;
-    value?: any; // Additional error details if available
-  }; // This will be present if success is false
+    value?: any;
+    type?: string;
+      code_hash: Binary,
+      deposit: bigint
+  };
 }
 
 export interface ContractExecutionResult {
@@ -32,6 +33,7 @@ export interface ContractExecutionResult {
     success: boolean;
     value: {
       account_id: string;
+      result: any;
     };
     flags: number;
     data: Binary;
@@ -43,6 +45,7 @@ interface DryRunProps {
   callType: string | undefined;
   useGasEstimates: boolean;
   setUseGasEstimates: (value: boolean) => void;
+  originalGas: {ref_time: bigint, proof_size: number}
 }
 
 // CodeUpload Component
@@ -76,7 +79,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult }> = ({ result }) => {
 };
 
 // ContractExecution Component
-const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ result }) => {
+const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean }> = ({ result, originalGas, useGasEstimates}) => {
   return (
     <div>
       {/* Gas Estimates */}
@@ -132,22 +135,6 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ resu
         </div>
       </div>
 
-      {/* Detailed Result Info */}
-      {result.result && result.result.value?.type && (
-        <div className="mt-4">
-          <h3 className="text-md font-semibold">Result Details</h3>
-          <div className="text-sm bg-gray-100 p-2 rounded">
-            <p>Type: {result.result.value.type}</p>
-            {result.result.value.value && (
-              <p>Sub-Type: {result.result.value.value.type}</p>
-            )}
-            {result.result.value.value?.value !== undefined && (
-              <p>Value: {JSON.stringify(result.result.value.value.value)}</p>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Debug Message */}
       {result.debug_message && (
         <div className="mt-4">
@@ -159,13 +146,13 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ resu
       )}
 
       {/* Result Status */}
-      {result.result?.success ? (
+      {result.result?.success && (useGasEstimates === true || isOriginalGasSufficient(originalGas, result.gas_required)) ? (
         <div className="text-green-600 font-bold flex items-center">
           The call will be successful.
         </div>
       ) : (
         <div className="text-red-600 font-bold flex items-center">
-          The call will not be successful.
+          The call will not be successful. {useGasEstimates === false && "Not enough gas provided."}
         </div>
       )}
     </div>
@@ -173,7 +160,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ resu
 };
 
 // Main DryRun Component
-export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, callType}: DryRunProps): JSX.Element {
+export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, callType, originalGas}: DryRunProps): JSX.Element {
   return (
     <div className="dry-run-outcome bg-white shadow-md rounded-md p-4">
       <h2 className="text-lg font-bold mb-4">Dry-run Outcome</h2>
@@ -182,7 +169,7 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, call
       {(callType === "upload_code") ? (
         <CodeUpload result={dryRunResult as CodeUploadResult} />
       ) : (
-        <ContractExecution result={dryRunResult as ContractExecutionResult} />
+        <ContractExecution result={dryRunResult as ContractExecutionResult} originalGas={originalGas} useGasEstimates={useGasEstimates}/>
       )}
 
       {/* Toggle */}
@@ -207,7 +194,7 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, call
 
 
 // TODO: need to get decimals of chain
-//ts-ignore
+//@ts-ignore
 function formatBigIntToUnit(value: bigint, decimals: number): string {
   const factor = BigInt(10 ** decimals);
   const formattedValue = value * factor / BigInt(1000000);
@@ -218,4 +205,8 @@ function formatBigIntToUnit(value: bigint, decimals: number): string {
 
   const decimalString = decimalPart.toString().padStart(decimals, '0').slice(0, decimals);
   return `${integerPart}.${decimalString}`;
+}
+
+function isOriginalGasSufficient(originalGas: {ref_time: bigint, proof_size: number}, gasRequired: {ref_time: bigint, proof_size: number}): boolean {
+  return originalGas?.ref_time >= gasRequired.ref_time && originalGas?.proof_size >= gasRequired.proof_size;
 }

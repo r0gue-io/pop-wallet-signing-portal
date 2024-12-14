@@ -1,24 +1,24 @@
 // Copyright 2022-2024 use-ink/contracts-ui authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-import React, { useEffect, useState } from "react";
-import useBackendAPI from "../api/useBackendAPI";
+import React, { useEffect, useState } from "react"
+import useBackendAPI from "../api/useBackendAPI"
 import {
-  createClient,
-  PolkadotClient,
   Binary,
-  UnsafeTransaction,
-  UnsafeApi,
-  HexString,
-  PolkadotSigner,
+  createClient,
   Enum,
-} from "polkadot-api";
-import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat";
-import { getWsProvider } from "polkadot-api/ws-provider/web";
-import { useSelectedAccount } from "@/context";
-import { Button } from "@/components/ui/button.tsx";
-import { Modal } from "@/Modal";
-import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun";
+  HexString,
+  PolkadotClient,
+  PolkadotSigner,
+  UnsafeApi,
+  UnsafeTransaction,
+} from "polkadot-api"
+import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
+import { getWsProvider } from "polkadot-api/ws-provider/web"
+import { useSelectedAccount } from "@/context"
+import { Button } from "@/components/ui/button.tsx"
+import { Modal } from "@/Modal"
+import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -143,9 +143,10 @@ export const SigningPortal: React.FC = () => {
         break;
 
       case "instantiate_with_code":
+        //@ts-ignore
         result = await api?.apis.ContractsApi.instantiate(
           selectedAccount.address, // origin
-          tx?.decodedCall.value.value.value, // value
+          args.value, // value
           undefined, // gasLimit
           undefined, // storageDepositLimit
           Enum("Upload", code),
@@ -155,12 +156,14 @@ export const SigningPortal: React.FC = () => {
         break;
 
       case "upload_code":
+        //@ts-ignore
         result = await api?.apis.ContractsApi.upload_code(
           selectedAccount.address, // origin
           code,
           undefined, // storageDepositLimit
           Enum("Enforced")
         );
+        console.log(result)
         break;
     }
     setDryRunResult(result);
@@ -176,7 +179,38 @@ export const SigningPortal: React.FC = () => {
       return;
     }
 
-    const payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+    let maybeModifiedTx = null;
+
+    if(isContract && useGasEstimates && dryRunResult) {
+      const {
+        type: pallet,
+        value: { type: callName, value: args },
+      } = tx.decodedCall
+
+      if (tx?.decodedCall.value.type === "instantiate_with_code") {
+        console.log("instantiate with code");
+        args.gas_limit.ref_time = dryRunResult.gas_required.ref_time;
+        args.gas_limit.proof_size = dryRunResult.gas_required.proof_size;
+        args.storage_deposit_limit = dryRunResult.storage_deposit.value;
+        // @ts-ignore
+        maybeModifiedTx = await _api.tx[pallet][callName](args)
+
+      } else if (tx.decodedCall.value.type === "upload_code") {
+        console.log("upload code");
+        args.deposit = dryRunResult.value.deposit;
+        // @ts-ignore
+        maybeModifiedTx = await _api.tx[pallet][callName](args)
+      }
+    }
+
+    console.log(maybeModifiedTx);
+
+    let payload: HexString | null = null;
+    if (maybeModifiedTx) {
+      payload = await maybeModifiedTx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+    } else {
+      payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+    }
 
     try {
       let response = await submitData(payload?.toString());
@@ -230,6 +264,7 @@ export const SigningPortal: React.FC = () => {
             dryRunResult={dryRunResult}
             useGasEstimates={useGasEstimates}
             setUseGasEstimates={setUseGasEstimates}
+            originalGas={tx?.decodedCall.value.value.gas_limit}
             callType={tx?.decodedCall.value.type}
           ></DryRun>
         </div>
