@@ -1,5 +1,8 @@
-import React, { useEffect, useState } from "react"
-import useBackendAPI from "../api/useBackendAPI"
+// Copyright 2022-2024 use-ink/contracts-ui authors & contributors
+// SPDX-License-Identifier: GPL-3.0-only
+
+import React, { useEffect, useState } from "react";
+import useBackendAPI from "../api/useBackendAPI";
 import {
   createClient,
   PolkadotClient,
@@ -7,14 +10,16 @@ import {
   UnsafeTransaction,
   UnsafeApi,
   HexString,
-  PolkadotSigner, Enum,
-} from "polkadot-api"
-import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
-import { getWsProvider } from "polkadot-api/ws-provider/web"
-import { useSelectedAccount } from "@/context"
-import { Button } from "@/components/ui/button.tsx"
-import { Modal } from "@/Modal"
-import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
+  PolkadotSigner,
+  Enum,
+} from "polkadot-api";
+import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat";
+import { getWsProvider } from "polkadot-api/ws-provider/web";
+import { useSelectedAccount } from "@/context";
+import { Button } from "@/components/ui/button.tsx";
+import { Modal } from "@/Modal";
+import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun";
+
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
@@ -45,8 +50,7 @@ export const SigningPortal: React.FC = () => {
     message: "",
   });
 
-  const selectedAccount = useSelectedAccount()
-
+  const selectedAccount = useSelectedAccount();
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -55,8 +59,8 @@ export const SigningPortal: React.FC = () => {
       setError(null);
       try {
         const result = await fetchPayload();
-        setRpc(result.chain_rpc)
-        setOriginalCallData(result.call_data)
+        setRpc(result.chain_rpc);
+        setOriginalCallData(result.call_data);
         let client = createClient(withPolkadotSdkCompat(getWsProvider(result.chain_rpc)));
         setClient(client);
         let api = client.getUnsafeApi();
@@ -69,7 +73,12 @@ export const SigningPortal: React.FC = () => {
         const tx = await api.txFromCallData(callData);
         setTx(tx);
         setIsContract(tx.decodedCall.type === "Contracts");
-        console.log(tx.decodedCall)
+        console.log(tx.decodedCall);
+
+        // Automatically trigger dry run if it's a contract call
+        if (tx.decodedCall.type === "Contracts") {
+          dryRun(tx, api);
+        }
       } catch (err) {
         console.log(err);
         setError("Failed to connect to server or fetch data");
@@ -80,6 +89,13 @@ export const SigningPortal: React.FC = () => {
 
     loadPayload();
   }, [fetchPayload]);
+
+  // Re-run dry run if selected account changes
+  useEffect(() => {
+    if (isContract && tx && _api) {
+      dryRun(tx, _api);
+    }
+  }, [selectedAccount, isContract, tx, _api]);
 
   const handleTerminate = async () => {
     setLoading(true);
@@ -93,7 +109,7 @@ export const SigningPortal: React.FC = () => {
       onConfirm: async () => {
         try {
           await terminate();
-          window.close()
+          window.close();
         } catch (err) {
           console.log(err);
           setError("Failed to terminate the server. Is it already closed?");
@@ -106,13 +122,13 @@ export const SigningPortal: React.FC = () => {
       onCancel: () => setIsModalOpen(false),
     });
     setIsModalOpen(true);
-
-
   };
 
-  const dryRun = async () => {
+  const dryRun = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
     let decodedCall = tx?.decodedCall;
-    if(decodedCall?.type !== "Contracts") { return; }
+    if (decodedCall?.type !== "Contracts") {
+      return;
+    }
 
     let args = decodedCall.value.value;
     let code = args.code;
@@ -123,45 +139,33 @@ export const SigningPortal: React.FC = () => {
 
     switch (decodedCall.value.type) {
       case "call":
-        // origin: AccountId,
-        //   dest: AccountId,
-        // value: Balance,
-        // gas_limit: Option<Weight>,
-        // storage_deposit_limit: Option<Balance>,
-        // input_data: Vec<u8>,
-        // @ts-ignore
-        //TODO
+        // TODO: Handle contract call dry run
         break;
 
       case "instantiate_with_code":
-        // @ts-ignore
-        result = await _api?.apis.ContractsApi.instantiate(
+        result = await api?.apis.ContractsApi.instantiate(
           selectedAccount.address, // origin
           tx?.decodedCall.value.value.value, // value
           undefined, // gasLimit
           undefined, // storageDepositLimit
           Enum("Upload", code),
           data,
-          salt,
-        )
+          salt
+        );
         break;
+
       case "upload_code":
-        console.log("***made it here")
-        console.log( Enum("Enforced"))
-        // @ts-ignore
-        result = await _api?.apis.ContractsApi.upload_code(
+        result = await api?.apis.ContractsApi.upload_code(
           selectedAccount.address, // origin
           code,
           undefined, // storageDepositLimit
-          Enum("Enforced" ),
-        )
-        console.log(result)
+          Enum("Enforced")
+        );
         break;
-
     }
     setDryRunResult(result);
-    console.log(result)
-  }
+    console.log(result);
+  };
 
   const sign = async () => {
     if (!tx) {
@@ -189,12 +193,12 @@ export const SigningPortal: React.FC = () => {
       } else {
         setError("An error occurred submitting the payload");
       }
-    } catch(err) {
-      setError("Unable to submit. Is the server closed?")
+    } catch (err) {
+      setError("Unable to submit. Is the server closed?");
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   // Render the UI
   return (
@@ -209,23 +213,36 @@ export const SigningPortal: React.FC = () => {
         {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
 
         <div className="font-semibold">Extrinsic Info:</div>
-        {tx ? <div><span className="text-gray-500">Pallet: </span>{tx.decodedCall.type} <br/>
-          <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}</div> : <p></p>}
+        {tx ? (
+          <div>
+            <span className="text-gray-500">Pallet: </span>
+            {tx.decodedCall.type} <br />
+            <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
+          </div>
+        ) : (
+          <p></p>
+        )}
       </div>
 
-      {isContract && dryRunResult &&
+      {isContract && dryRunResult && (
         <div>
-          <DryRun dryRunResult={dryRunResult} useGasEstimates={useGasEstimates} setUseGasEstimates={setUseGasEstimates} callType={tx?.decodedCall.value.type}></DryRun>
-
+          <DryRun
+            dryRunResult={dryRunResult}
+            useGasEstimates={useGasEstimates}
+            setUseGasEstimates={setUseGasEstimates}
+            callType={tx?.decodedCall.value.type}
+          ></DryRun>
         </div>
-      }
+      )}
 
-
-      <Button onClick={async () => await dryRun()} className="m-2 col bg-blue-600">dry run</Button>
-      <Button onClick={async () => await sign()} className="m-2 col bg-blue-600">Sign</Button>
-      <Button onClick={handleTerminate}   className="m-1 px-2 py-1 text-sm bg-gray-400 hover:bg-red-500"
+      <Button onClick={async () => await sign()} className="m-2 col bg-blue-600">
+        Sign
+      </Button>
+      <Button
+        onClick={handleTerminate}
+        className="m-1 px-2 py-1 text-sm bg-gray-400 hover:bg-red-500"
       >
-       Cancel
+        Cancel
       </Button>
 
       <Modal
