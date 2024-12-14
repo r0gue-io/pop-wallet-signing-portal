@@ -55,7 +55,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult }> = ({ result }) => {
         <div>
           <div className="text-sm bg-gray-100 p-2 rounded">
             <p>Code Hash: {result.value?.code_hash.asHex()}</p>
-            <p>Deposit: {result.value?.deposit.toString()} units</p>
+            <p>Storage Deposit: {result.value?.deposit.toString()}</p>
           </div>
           <div className="text-green-600 font-bold flex items-center">
             The call will be successful.
@@ -117,7 +117,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ resu
         <div className="mb-4">
           <h3 className="text-md font-semibold">Storage Deposit</h3>
           <div className="bg-gray-100 p-2 rounded shadow-sm text-sm">
-            {result.storage_deposit.type}: {result.storage_deposit.value.toString()} units
+            {result.storage_deposit.type}: {result.storage_deposit.value.toString()}
           </div>
         </div>
       )}
@@ -203,4 +203,19 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, call
       </div>
     </div>
   );
+}
+
+
+// TODO: need to get decimals of chain
+//ts-ignore
+function formatBigIntToUnit(value: bigint, decimals: number): string {
+  const factor = BigInt(10 ** decimals);
+  const formattedValue = value * factor / BigInt(1000000);
+
+  // Convert the formatted value into a string with a fixed number of decimal places
+  const integerPart = formattedValue / factor;
+  const decimalPart = formattedValue % factor;
+
+  const decimalString = decimalPart.toString().padStart(decimals, '0').slice(0, decimals);
+  return `${integerPart}.${decimalString}`;
 }
