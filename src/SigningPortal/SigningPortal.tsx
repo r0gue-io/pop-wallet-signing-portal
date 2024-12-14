@@ -14,7 +14,7 @@ import { getWsProvider } from "polkadot-api/ws-provider/web"
 import { useSelectedAccount } from "@/context"
 import { Button } from "@/components/ui/button.tsx"
 import { Modal } from "@/Modal"
-import { DryRun } from "@/DryRun"
+import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
@@ -111,23 +111,54 @@ export const SigningPortal: React.FC = () => {
   };
 
   const dryRun = async () => {
-    // let inkClient = getInkClient(withPolkadotSdkCompat(getWsProvider(rpc)));
-    console.log("***here");
-    let code = tx?.decodedCall.value.value.code;
-    let data = tx?.decodedCall.value.value.data;
-    let salt = Binary.fromText("salt 100");
-    console.log("***before instantiate");
+    let decodedCall = tx?.decodedCall;
+    if(decodedCall?.type !== "Contracts") { return; }
 
-    // @ts-ignore
-    let result = await _api?.apis.ContractsApi.instantiate(
-      selectedAccount.address, // origin
-      0n, // value
-      undefined, // gasLimit
-      undefined, // storagedepositlimit
-      Enum("Upload", code),
-      data,
-      salt,
-    )
+    let args = decodedCall.value.value;
+    let code = args.code;
+    let data = args.data;
+    let salt = args.salt;
+
+    let result: ContractExecutionResult | CodeUploadResult | null = null;
+
+    switch (decodedCall.value.type) {
+      case "call":
+        // origin: AccountId,
+        //   dest: AccountId,
+        // value: Balance,
+        // gas_limit: Option<Weight>,
+        // storage_deposit_limit: Option<Balance>,
+        // input_data: Vec<u8>,
+        // @ts-ignore
+        //TODO
+        break;
+
+      case "instantiate_with_code":
+        // @ts-ignore
+        result = await _api?.apis.ContractsApi.instantiate(
+          selectedAccount.address, // origin
+          tx?.decodedCall.value.value.value, // value
+          undefined, // gasLimit
+          undefined, // storageDepositLimit
+          Enum("Upload", code),
+          data,
+          salt,
+        )
+        break;
+      case "upload_code":
+        console.log("***made it here")
+        console.log( Enum("Enforced"))
+        // @ts-ignore
+        result = await _api?.apis.ContractsApi.upload_code(
+          selectedAccount.address, // origin
+          code,
+          undefined, // storageDepositLimit
+          Enum("Enforced" ),
+        )
+        console.log(result)
+        break;
+
+    }
     setDryRunResult(result);
     console.log(result)
   }
@@ -184,7 +215,7 @@ export const SigningPortal: React.FC = () => {
 
       {isContract && dryRunResult &&
         <div>
-          <DryRun dryRunResult={dryRunResult} useGasEstimates={useGasEstimates} setUseGasEstimates={setUseGasEstimates}></DryRun>
+          <DryRun dryRunResult={dryRunResult} useGasEstimates={useGasEstimates} setUseGasEstimates={setUseGasEstimates} callType={tx?.decodedCall.value.type}></DryRun>
 
         </div>
       }

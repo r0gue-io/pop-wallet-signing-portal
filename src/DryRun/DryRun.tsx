@@ -1,62 +1,123 @@
 // Copyright 2022-2024 use-ink/contracts-ui authors & contributors
 // SPDX-License-Identifier: GPL-3.0-only
 
-interface DryRunProps {
-  dryRunResult: {
-    gas_consumed?: { ref_time: bigint; proof_size: bigint };
-    gas_required?: { ref_time: bigint; proof_size: bigint };
-    storage_deposit?: { type: string; value: bigint };
-    result?: { success: boolean; value?: { account_id?: string; type?: string; value?: { type: string; value?: any } } };
-    debug_message?: { asText: () => string };
+import { Binary } from "polkadot-api";
+
+interface CodeUploadResult {
+  code_hash?: Binary; // This will be present if success is true
+  deposit?: bigint; // This will be present if success is true
+  type?: string; // Type of error if success is false
+  value?: {
+    type: string;
+    value?: any; // Additional error details if available
+  }; // This will be present if success is false
+}
+
+export interface ContractExecutionResult {
+  gas_consumed: {
+    ref_time: bigint;
+    proof_size: number;
   };
+  gas_required: {
+    ref_time: bigint;
+    proof_size: number;
+  };
+  storage_deposit: {
+    type: string;
+    value: bigint;
+  };
+  debug_message: Binary;
+  events: any[];
+  result: {
+    success: boolean;
+    value: {
+      account_id: string;
+    };
+    flags: number;
+    data: Binary;
+  };
+}
+
+interface DryRunProps {
+  dryRunResult: ContractExecutionResult | CodeUploadResult;
+  callType: string | undefined;
   useGasEstimates: boolean;
   setUseGasEstimates: (value: boolean) => void;
 }
 
-export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates }: DryRunProps): JSX.Element {
+// CodeUpload Component
+const CodeUpload: React.FC<{ result: CodeUploadResult }> = ({ result }) => {
   return (
-    <div className="dry-run-outcome bg-white shadow-md rounded-md p-4">
-      <h2 className="text-lg font-bold mb-4">Dry-run Outcome</h2>
+    <div className="mb-4">
+      <h3 className="text-md font-semibold">Code Upload Result</h3>
+      {/* Result Status */}
+      {result.success ? (
+        <div>
+          <div className="text-sm bg-gray-100 p-2 rounded">
+            <p>Code Hash: {result.value?.code_hash.asHex()}</p>
+            <p>Deposit: {result.value?.deposit.toString()} units</p>
+          </div>
+          <div className="text-green-600 font-bold flex items-center">
+            The call will be successful.
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="text-sm bg-gray-100 p-2 rounded">
+            <p>Result: {result.value?.value.value.type}</p>
+          </div>
+          <div className="text-red-600 font-bold flex items-center">
+            The call will not be successful.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
+// ContractExecution Component
+const ContractExecution: React.FC<{ result: ContractExecutionResult }> = ({ result }) => {
+  return (
+    <div>
       {/* Gas Estimates */}
-      {dryRunResult.gas_consumed && (
+      {result.gas_consumed && (
         <div className="mb-4">
           <h3 className="text-md font-semibold">Gas Consumed</h3>
           <div className="flex space-x-4 text-sm">
             <div className="bg-gray-100 p-2 rounded shadow-sm">
               <p>Ref Time</p>
-              <p>{dryRunResult.gas_consumed.ref_time.toString()} ns</p>
+              <p>{result.gas_consumed.ref_time.toString()} ns</p>
             </div>
             <div className="bg-gray-100 p-2 rounded shadow-sm">
               <p>Proof Size</p>
-              <p>{dryRunResult.gas_consumed.proof_size.toString()} bytes</p>
+              <p>{result.gas_consumed.proof_size.toString()} bytes</p>
             </div>
           </div>
         </div>
       )}
 
-      {dryRunResult.gas_required && (
+      {result.gas_required && (
         <div className="mb-4">
           <h3 className="text-md font-semibold">Gas Required</h3>
           <div className="flex space-x-4 text-sm">
             <div className="bg-gray-100 p-2 rounded shadow-sm">
               <p>Ref Time</p>
-              <p>{dryRunResult.gas_required.ref_time.toString()} ns</p>
+              <p>{result.gas_required.ref_time.toString()} ns</p>
             </div>
             <div className="bg-gray-100 p-2 rounded shadow-sm">
               <p>Proof Size</p>
-              <p>{dryRunResult.gas_required.proof_size.toString()} bytes</p>
+              <p>{result.gas_required.proof_size.toString()} bytes</p>
             </div>
           </div>
         </div>
       )}
 
       {/* Storage Deposit */}
-      {dryRunResult.storage_deposit && (
+      {result.storage_deposit && (
         <div className="mb-4">
           <h3 className="text-md font-semibold">Storage Deposit</h3>
           <div className="bg-gray-100 p-2 rounded shadow-sm text-sm">
-            {dryRunResult.storage_deposit.type}: {dryRunResult.storage_deposit.value.toString()} units
+            {result.storage_deposit.type}: {result.storage_deposit.value.toString()} units
           </div>
         </div>
       )}
@@ -65,14 +126,40 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates }: Dr
       <div className="mb-4">
         <h3 className="text-md font-semibold">Contract Address</h3>
         <div className="bg-gray-100 p-2 rounded shadow-sm text-sm">
-          {dryRunResult.result?.success && dryRunResult.result.value?.account_id
-            ? dryRunResult.result.value.account_id
+          {result.result?.success && result.result.value?.account_id
+            ? result.result.value.account_id
             : "None"}
         </div>
       </div>
 
+      {/* Detailed Result Info */}
+      {result.result && result.result.value?.type && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold">Result Details</h3>
+          <div className="text-sm bg-gray-100 p-2 rounded">
+            <p>Type: {result.result.value.type}</p>
+            {result.result.value.value && (
+              <p>Sub-Type: {result.result.value.value.type}</p>
+            )}
+            {result.result.value.value?.value !== undefined && (
+              <p>Value: {JSON.stringify(result.result.value.value.value)}</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Debug Message */}
+      {result.debug_message && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold">Debug Message</h3>
+          <p className="text-sm bg-gray-100 p-2 rounded">
+            {result.debug_message.asText()}
+          </p>
+        </div>
+      )}
+
       {/* Result Status */}
-      {dryRunResult.result?.success ? (
+      {result.result?.success ? (
         <div className="text-green-600 font-bold flex items-center">
           The call will be successful.
         </div>
@@ -81,32 +168,24 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates }: Dr
           The call will not be successful.
         </div>
       )}
+    </div>
+  );
+};
 
-      {/* Detailed Result Info */}
-      {dryRunResult.result && dryRunResult.result.value?.type && (
-        <div className="mt-4">
-          <h3 className="text-md font-semibold">Result Details</h3>
-          <div className="text-sm bg-gray-100 p-2 rounded">
-            <p>Type: {dryRunResult.result.value.type}</p>
-            {dryRunResult.result.value.value && (
-              <p>Sub-Type: {dryRunResult.result.value.value.type}</p>
-            )}
-            {dryRunResult.result.value.value?.value !== undefined && (
-              <p>Value: {JSON.stringify(dryRunResult.result.value.value.value)}</p>
-            )}
-          </div>
-        </div>
+// Main DryRun Component
+export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates, callType}: DryRunProps): JSX.Element {
+  return (
+    <div className="dry-run-outcome bg-white shadow-md rounded-md p-4">
+      <h2 className="text-lg font-bold mb-4">Dry-run Outcome</h2>
+
+      {/* Render the appropriate result */}
+      {(callType === "upload_code") ? (
+        <CodeUpload result={dryRunResult as CodeUploadResult} />
+      ) : (
+        <ContractExecution result={dryRunResult as ContractExecutionResult} />
       )}
 
-      {/* Debug Message */}
-      {dryRunResult.debug_message && (
-        <div className="mt-4">
-          <h3 className="text-md font-semibold">Debug Message</h3>
-          <p className="text-sm bg-gray-100 p-2 rounded">
-            {dryRunResult.debug_message.asText()}
-          </p>
-        </div>
-      )}
+      {/* Toggle */}
       <div className="mt-4 flex space-x-2">
         <div
           className={`w-12 h-6 flex items-center cursor-pointer rounded-full p-1 duration-300 ease-in-out ${
@@ -120,7 +199,7 @@ export function DryRun({ dryRunResult, useGasEstimates, setUseGasEstimates }: Dr
             }`}
           ></div>
         </div>
-        <span>Use Gas Estimates?</span>
+        <span>Use Gas Estimates in Call?</span>
       </div>
     </div>
   );
