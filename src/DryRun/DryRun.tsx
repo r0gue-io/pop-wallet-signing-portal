@@ -33,7 +33,7 @@ export interface ContractExecutionResult {
     success: boolean;
     value: {
       account_id: string;
-      result: any;
+      value?: {type: string};
     };
     flags: number;
     data: Binary;
@@ -135,6 +135,22 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         </div>
       </div>
 
+      {/* Detailed Result Info */}
+      {result.result && result.result.value?.value?.type && (
+        <div className="mt-4">
+          <h3 className="text-md font-semibold">Result Details</h3>
+          <div className="text-sm bg-gray-100 p-2 rounded">
+            <p>Type: {result.result.value.type}</p>
+            {result.result.value.value && (
+              <p>Sub-Type: {result.result.value.value.type}</p>
+            )}
+            {result.result.value.value?.value !== undefined && (
+              <p>Value: {JSON.stringify(result.result.value.value.value)}</p>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Debug Message */}
       {result.debug_message && (
         <div className="mt-4">
@@ -146,13 +162,13 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
       )}
 
       {/* Result Status */}
-      {result.result?.success && (useGasEstimates === true || isOriginalGasSufficient(originalGas, result.gas_required)) ? (
+      {result.result?.success && (useGasEstimates || isOriginalGasSufficient(originalGas, result.gas_required)) ? (
         <div className="text-green-600 font-bold flex items-center">
           The call will be successful.
         </div>
       ) : (
         <div className="text-red-600 font-bold flex items-center">
-          The call will not be successful. {useGasEstimates === false && "Not enough gas provided."}
+          The call will not be successful. {result.result?.success && !useGasEstimates && "Not enough gas provided."}
         </div>
       )}
     </div>
