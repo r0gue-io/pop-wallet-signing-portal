@@ -24,7 +24,7 @@ export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
   const [_client, setClient] = useState<PolkadotClient | null>(null);
-  const [_api, setApi] = useState<UnsafeApi<any> | null>(null);
+  const [api, setApi] = useState<UnsafeApi<any> | null>(null);
   const [_originalCallData, setOriginalCallData] = useState<Uint8Array | null>(null);
   const [_callData, setCallData] = useState<Binary | null>(null);
   const [tx, setTx] = useState<UnsafeTransaction<any, string, string, any> | null>(null);
@@ -92,10 +92,10 @@ export const SigningPortal: React.FC = () => {
 
   // Re-run dry run if selected account changes
   useEffect(() => {
-    if (isContract && tx && _api) {
-      dryRun(tx, _api);
+    if (isContract && tx && api) {
+      dryRun(tx, api);
     }
-  }, [selectedAccount, isContract, tx, _api]);
+  }, [selectedAccount, isContract, tx, api]);
 
   const handleTerminate = async () => {
     setLoading(true);
@@ -194,19 +194,17 @@ export const SigningPortal: React.FC = () => {
         value: { type: callName, value: args },
       } = tx.decodedCall
 
-      if (tx?.decodedCall.value.type === "instantiate_with_code") {
-        console.log("instantiate with code");
+      if (tx?.decodedCall.value.type === "instantiate_with_code" || tx?.decodedCall.value.type === "call") {
         args.gas_limit.ref_time = dryRunResult.gas_required.ref_time;
         args.gas_limit.proof_size = dryRunResult.gas_required.proof_size;
         args.storage_deposit_limit = dryRunResult.storage_deposit.value;
         // @ts-ignore
-        maybeModifiedTx = await _api.tx[pallet][callName](args)
+        maybeModifiedTx = await api.tx[pallet][callName](args)
 
       } else if (tx.decodedCall.value.type === "upload_code") {
-        console.log("upload code");
         args.deposit = dryRunResult.value.deposit;
         // @ts-ignore
-        maybeModifiedTx = await _api.tx[pallet][callName](args)
+        maybeModifiedTx = await api.tx[pallet][callName](args)
       }
     }
 
