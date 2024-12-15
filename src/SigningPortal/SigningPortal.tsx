@@ -139,7 +139,24 @@ export const SigningPortal: React.FC = () => {
 
     switch (decodedCall.value.type) {
       case "call":
+        // origin: AccountId,
+        //   dest: AccountId,
+        // value: Balance,
+        // gas_limit: Option<Weight>,
+        // storage_deposit_limit: Option<Balance>,
+        // input_data: Vec<u8>,
         // TODO: Handle contract call dry run
+        console.log("call dry run")
+        // @ts-ignore
+        result = await api?.apis.ContractsApi.call(
+          selectedAccount.address, // origin
+          args.dest.value, // dest
+          args.value, // value
+          undefined, // gasLimit
+          undefined, // storageDepositLimit
+          data
+        );
+        console.log(result)
         break;
 
       case "instantiate_with_code":

@@ -33,7 +33,8 @@ export interface ContractExecutionResult {
     success: boolean;
     value: {
       account_id: string;
-      value?: {type: string};
+      value?: {type: string, value: any};
+      type?: string
     };
     flags: number;
     data: Binary;
@@ -140,11 +141,11 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         <div className="mt-4">
           <h3 className="text-md font-semibold">Result Details</h3>
           <div className="text-sm bg-gray-100 p-2 rounded">
-            <p>Type: {result.result.value.type}</p>
+            <p>Type: {result.result.value?.type}</p>
             {result.result.value.value && (
               <p>Sub-Type: {result.result.value.value.type}</p>
             )}
-            {result.result.value.value?.value !== undefined && (
+            {result.result.value.value !== undefined && (
               <p>Value: {JSON.stringify(result.result.value.value.value)}</p>
             )}
           </div>
@@ -168,7 +169,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         </div>
       ) : (
         <div className="text-red-600 font-bold flex items-center">
-          The call will not be successful. {result.result?.success && !useGasEstimates && "Not enough gas provided."}
+          The call will not be successful. {result.result?.success && !useGasEstimates && "Not enough gas provided (use estimates)"}
         </div>
       )}
     </div>
