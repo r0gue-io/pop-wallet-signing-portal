@@ -3,7 +3,24 @@ import { ExtensionProvider } from "./context/ExtensionProvider"
 import { AccountProvider } from "./context/AccountProvider"
 import {SigningPortal} from "./SigningPortal"
 
-export default function LoginForm() {
+import { useEffect } from 'react';
+import "preline/preline"; // Import Preline's JavaScript functionality
+import { IStaticMethods } from "preline/preline";
+
+// Declare `HSStaticMethods` for TypeScript
+declare global {
+  interface Window {
+    HSStaticMethods: IStaticMethods;
+  }
+}
+
+
+export default function App() {
+  useEffect(() => {
+    // Initialize Preline components when the app loads
+    window.HSStaticMethods.autoInit();
+  }, []);
+
   return (
     <div className="flex items-center justify-center mt-6">
       <Card className="w-full max-w-xl">
