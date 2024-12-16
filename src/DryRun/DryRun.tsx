@@ -203,7 +203,6 @@ export function DryRun({
         aria-labelledby="hs-dry-run-success"
       >
         <div className="flex items-center justify-between">
-          {/* Left side with drop arrow */}
           <div className="flex items-center space-x-2">
             <button
               type="button"
@@ -217,9 +216,19 @@ export function DryRun({
               Dry-run Outcome
             </h3>
           </div>
-          {/* Right side with success/error icon */}
-          <div className="shrink-0">
-            {success ? <SuccessIcon /> : <ErrorIcon />}
+          <div className="flex items-center space-x-2">
+            {success ? (
+              <div className="flex items-center space-x-2">
+
+                <span className="text-green-600 dark:text-green-400 font-medium">succeeds</span>
+                <SuccessIcon />
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <span className="text-red-600 dark:text-red-400 font-medium">fails</span>
+                <ErrorIcon />
+              </div>
+            )}
           </div>
         </div>
 
@@ -231,9 +240,9 @@ export function DryRun({
           duration-300 
           ease-in-out 
           ${dryRunOpen ? "max-h-screen opacity-100" : "max-h-0 opacity-0"}`}>
-            <div className="ms-3">
-              <div
-                className={`
+          <div className="ms-3">
+            <div
+              className={`
               mt-4 
               transition-all 
               duration-300 
