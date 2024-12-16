@@ -10,4 +10,13 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    minify: 'terser',
+    terserOptions: {
+      output: {
+        // Remove all comments
+        comments: false,
+      },
+    },
+  },
 })
