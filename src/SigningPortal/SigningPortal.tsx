@@ -224,7 +224,7 @@ export const SigningPortal: React.FC = () => {
           title: "Signing Successful",
           message: "Pop CLI will submit the signed transaction. You can close the tab now.",
           confirmText: "Close Tab",
-          confirmClass: "px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-300",
+          confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-600",
           showCancelButton: false,
           onConfirm: () => window.close(),
         });
@@ -256,7 +256,7 @@ export const SigningPortal: React.FC = () => {
         </div>
 
         <div className="pb-3">
-        <div className="font-semibold">Extrinsic Info:</div>
+          <div className="font-semibold">Extrinsic Info:</div>
           {tx ? (
             <div>
               <span className="text-gray-500">Pallet: </span>
@@ -281,15 +281,20 @@ export const SigningPortal: React.FC = () => {
         </div>
       )}
 
-      <Button onClick={async () => await sign()} className="m-2 col font-extrabold bg-pink-700">
-        Sign
-      </Button>
-      <Button
-        onClick={handleTerminate}
-        className="m-1 px-2 py-1 font-extrabold bg-gray-400 hover:bg-red-600"
-      >
-        Cancel
-      </Button>
+      <div className="flex justify-center items-center space-x-4">
+        <Button
+          onClick={async () => await sign()}
+          className="text-lg font-bold bg-pink-700 hover:bg-blue-600"
+        >
+          Sign
+        </Button>
+        <Button
+          onClick={handleTerminate}
+          className="text-lg font-bold bg-gray-400 hover:bg-red-600"
+        >
+          Cancel
+        </Button>
+      </div>
 
       <Modal
         isOpen={isModalOpen}
