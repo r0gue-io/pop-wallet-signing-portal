@@ -111,11 +111,11 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         <div className="mb-4">
           <h3 className="text-md font-semibold">Gas Consumed</h3>
           <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded shadow-sm">
+            <div className="bg-gray-200 p-2 rounded">
               <p>Ref Time</p>
               <p>{result.gas_consumed.ref_time.toString()} ns</p>
             </div>
-            <div className="bg-gray-200 p-2 rounded shadow-sm">
+            <div className="bg-gray-200 p-2 rounded">
               <p>Proof Size</p>
               <p>{result.gas_consumed.proof_size.toString()} bytes</p>
             </div>
@@ -127,11 +127,11 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         <div className="mb-4">
           <h3 className="text-md font-semibold">Gas Required</h3>
           <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded shadow-sm">
+            <div className="bg-gray-200 p-2 rounded">
               <p>Ref Time</p>
               <p>{result.gas_required.ref_time.toString()} ns</p>
             </div>
-            <div className="bg-gray-200 p-2 rounded shadow-sm">
+            <div className="bg-gray-200 p-2 rounded">
               <p>Proof Size</p>
               <p>{result.gas_required.proof_size.toString()} bytes</p>
             </div>
@@ -143,7 +143,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
       {result.storage_deposit && (
         <div className="mb-4">
           <h3 className="text-md font-semibold">Storage Deposit</h3>
-          <div className="bg-gray-200 p-2 rounded shadow-sm text-sm">
+          <div className="bg-gray-200 p-2 rounded text-sm">
             {result.storage_deposit.type}: {result.storage_deposit.value.toString()}
           </div>
         </div>
@@ -205,7 +205,7 @@ export function DryRun({
     <div className="space-y-5 pb-6">
       {/* Preline Alert for Success */}
       <div
-        className=" bg-gray-100 border border-gray-200 rounded-lg shadow-lg p-4 dark:bg-neutral-800 dark:border-neutral-700"
+        className=" bg-gray-100 border border-gray-200 rounded-lg p-4 dark:bg-neutral-800 dark:border-neutral-700"
         role="alert"
         tabIndex={-1}
         aria-labelledby="hs-dry-run-success"
@@ -281,7 +281,7 @@ export function DryRun({
             onClick={() => setUseGasEstimates(!useGasEstimates)}
           >
             <div
-              className={`w-4 h-4 bg-white rounded-full shadow-md transform duration-300 ease-in-out ${
+              className={`w-4 h-4 bg-white rounded-full transform duration-300 ease-in-out ${
                 useGasEstimates ? "translate-x-6" : "translate-x-0"
               }`}
             ></div>
