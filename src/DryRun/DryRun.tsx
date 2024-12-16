@@ -52,11 +52,14 @@ interface DryRunProps {
 
 // CodeUpload Component
 const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void }> = ({ result , setSuccess}) => {
-
-  const isSuccess = (result: CodeUploadResult) => {
-    setSuccess(result.success || false); // Ensure setSuccess is called with a boolean value
-    return result.success;
+  const isSuccess = (result: CodeUploadResult): boolean => {
+    return result.success as boolean;
   };
+
+  React.useEffect(() => {
+    const success = isSuccess(result);
+    setSuccess(success);
+  }, [result, setSuccess]);
 
   return (
     <div className="mb-4">
@@ -90,11 +93,15 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
 const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void}> = ({ result, originalGas, useGasEstimates, setSuccess}) => {
 
   const isSuccess = (result: ContractExecutionResult) => {
-    const success = result.result?.success &&
+    return result.result?.success &&
       (useGasEstimates || isOriginalGasSufficient(originalGas, result.gas_required));
-    setSuccess(success || false); // Ensure setSuccess is called with a boolean value
-    return success;
   };
+
+  // Use useEffect to update success state
+  React.useEffect(() => {
+    const success = isSuccess(result);
+    setSuccess(success);
+  }, [result, useGasEstimates, originalGas, setSuccess]);
 
   return (
     <div>
@@ -268,7 +275,7 @@ export function DryRun({
         <div className="flex items-center mt-4 space-x-2">
           <div
             className={`w-12 h-6 flex items-center cursor-pointer rounded-full p-1 duration-300 ease-in-out ${
-              useGasEstimates ? "bg-blue-500" : "bg-gray-300"
+              useGasEstimates ? "bg-blue-600" : "bg-gray-300"
             }`}
             onClick={() => setUseGasEstimates(!useGasEstimates)}
           >
