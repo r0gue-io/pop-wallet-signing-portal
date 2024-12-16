@@ -9,18 +9,8 @@ import { Button } from '@/components/ui/button'
 import { useWalletDisconnector } from '@reactive-dot/react'
 import { ConnectionDialog } from 'dot-connect/react.js'
 import { Polkicon } from '@polkadot-ui/react'
-import { ChevronDown} from 'lucide-react'
+import {ChevronDown} from "@/components/ui/chevron-down.tsx"
 
-
-// import {
-//   Menubar,
-//   MenubarContent,
-//   MenubarItem,
-//   MenubarMenu,
-//   MenubarSeparator,
-//   MenubarShortcut,
-//   MenubarTrigger,
-// } from '@/components/ui/menubar'
 import { useAccounts } from './context/AccountsContext'
 import { Fragment, useEffect, useState } from 'react'
 export const WalletManager = () => {
@@ -38,7 +28,6 @@ export const WalletManager = () => {
   return (
     <>
         <div className="flex w-full justify-center">
-          <div></div>
           <div className="flex w-full">
             {!accounts.length && (
               <Button onClick={() => setIsConnectionDialogOpen(true)}
@@ -62,7 +51,7 @@ export const WalletManager = () => {
                       outerColor="transparent"
                     />
                     {selectedAccount?.name}
-                    <ChevronDown className="ml-2 h-4 w-4" />
+                    <ChevronDown className="ml-2 h-4 w-4" isOpen={false}/>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="max-h-[calc(100vh-5rem)] overflow-auto">
