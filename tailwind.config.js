@@ -18,6 +18,19 @@ module.exports = {
     },
     extend: {
       colors: {
+        pink: {
+          "50": "#fff0fa",
+          "100": "#ffe4f6",
+          "200": "#ffc9ef",
+          "300": "#ff9ce0",
+          "400": "#ff5fc9",
+          "500": "#ff30b1",
+          "600": "#f50d8f",
+          "700": "#e6007a", // base
+          "800": "#b0045d",
+          "900": "#920950",
+          "950": "#5b002c",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",

@@ -33,7 +33,7 @@ export const SigningPortal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isContract, setIsContract] = useState<boolean>(false);
   const [dryRunResult, setDryRunResult] = useState<any | null>(null);
-  const [useGasEstimates, setUseGasEstimates] = useState<boolean>(false);
+  const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
@@ -245,22 +245,28 @@ export const SigningPortal: React.FC = () => {
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
-      <div className="font-semibold">Account:</div>
-      <span>{selectedAccount?.address} </span>
+      <div className="pb-3">
+        <div className="font-semibold">Account:</div>
+        <span>{selectedAccount?.address} </span>
+      </div>
       <div>
-        <div className="font-semibold">RPC:</div>
-        {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+        <div className="pb-3">
+          <div className="font-semibold">RPC:</div>
+          {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+        </div>
 
+        <div className="pb-3">
         <div className="font-semibold">Extrinsic Info:</div>
-        {tx ? (
-          <div>
-            <span className="text-gray-500">Pallet: </span>
-            {tx.decodedCall.type} <br />
-            <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
-          </div>
-        ) : (
-          <p></p>
-        )}
+          {tx ? (
+            <div>
+              <span className="text-gray-500">Pallet: </span>
+              {tx.decodedCall.type} <br />
+              <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
+            </div>
+          ) : (
+            <p></p>
+          )}
+        </div>
       </div>
 
       {isContract && dryRunResult && (
@@ -275,12 +281,12 @@ export const SigningPortal: React.FC = () => {
         </div>
       )}
 
-      <Button onClick={async () => await sign()} className="m-2 col bg-blue-600">
+      <Button onClick={async () => await sign()} className="m-2 col font-extrabold bg-pink-700">
         Sign
       </Button>
       <Button
         onClick={handleTerminate}
-        className="m-1 px-2 py-1 text-sm bg-gray-400 hover:bg-red-500"
+        className="m-1 px-2 py-1 font-extrabold bg-gray-400 hover:bg-red-600"
       >
         Cancel
       </Button>
