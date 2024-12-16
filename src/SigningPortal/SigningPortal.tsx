@@ -15,7 +15,8 @@ import {
 } from "polkadot-api"
 import { withPolkadotSdkCompat } from "polkadot-api/polkadot-sdk-compat"
 import { getWsProvider } from "polkadot-api/ws-provider/web"
-import { useSelectedAccount } from "@/context"
+// import { useSelectedAccount } from "@/context"
+import { useAccounts } from '@/context/AccountsContext'
 import { Button } from "@/components/ui/button.tsx"
 import { Modal } from "@/Modal"
 import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
@@ -50,7 +51,8 @@ export const SigningPortal: React.FC = () => {
     message: "",
   });
 
-  const selectedAccount = useSelectedAccount();
+  const { selectedAccount } = useAccounts()
+  console.log(selectedAccount);
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -126,7 +128,7 @@ export const SigningPortal: React.FC = () => {
 
   const dryRun = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
     let decodedCall = tx?.decodedCall;
-    if (decodedCall?.type !== "Contracts") {
+    if (!selectedAccount || decodedCall?.type !== "Contracts") {
       return;
     }
 
@@ -241,6 +243,7 @@ export const SigningPortal: React.FC = () => {
 
   // Render the UI
   return (
+    <> {selectedAccount &&
     <div style={{ padding: "20px" }}>
       {loading && <p>Loading...</p>}
       {error && <p style={{ color: "red" }}>Error: {error}</p>}
@@ -308,5 +311,6 @@ export const SigningPortal: React.FC = () => {
         onCancel={modalConfig.onCancel}
       />
     </div>
+      }</>
   );
 };
