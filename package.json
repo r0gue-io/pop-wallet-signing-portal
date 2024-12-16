@@ -6,12 +6,11 @@
   "scripts": {
     "postinstall": "papi --whitelist whitelist.ts",
     "dev": "vite",
-    "build": "papi --whitelist whitelist.ts && tsc && vite build",
+    "build": "tsc && vite build",
     "format": "prettier --write README.md \"src/**/*.{js,jsx,ts,tsx,json,md}\"",
     "preview": "vite preview"
   },
   "dependencies": {
-    "@polkadot-api/descriptors": "file:.papi/descriptors",
     "@preline/collapse": "^2.6.0",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
