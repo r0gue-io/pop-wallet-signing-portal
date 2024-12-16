@@ -3,6 +3,7 @@
 
 import { Binary } from "polkadot-api";
 import React from "react"
+import { ChevronDown } from "@/components/ui/chevron-down.tsx"
 
 export interface CodeUploadResult {
   type?: string;
@@ -216,7 +217,7 @@ export function DryRun({
               className="w-6 h-6 flex justify-center items-center p-1 bg-gray-200 rounded-full dark:bg-gray-700"
               onClick={() => setDryRunOpen(!dryRunOpen)}
             >
-              <DropdownArrow isOpen={dryRunOpen} />
+              <ChevronDown isOpen={dryRunOpen} className=""/>
 
             </button>
             <h3 id="hs-dry-run-success" className="text-gray-800 font-semibold dark:text-white">
@@ -293,24 +294,6 @@ export function DryRun({
     </div>
   );
 }
-
-
-const DropdownArrow = ({ isOpen }: { isOpen: boolean }) => (
-  <svg
-    className={`w-4 h-4 transform transition-transform ${isOpen ? "rotate-180" : ""}`}
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M19 9l-7 7-7-7"
-    />
-  </svg>
-)
 
 //@ts-ignore
 const SuccessIcon = () => (
