@@ -254,74 +254,79 @@ export const SigningPortal: React.FC = () => {
   // Render the UI
   return (
     <> {selectedAccount &&
-    <div style={{ padding: "20px" }}>
-      {loading && <p>Loading...</p>}
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
+      <div style={{ padding: "20px" }}>
+        {loading && <p>Loading...</p>}
+        {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
-      <div className="pb-3">
-        <div className="font-semibold">Account:</div>
-        <span>{selectedAccount?.address} </span>
-      </div>
-      <div>
-        <div className="pb-3">
-          <div className="font-semibold">RPC:</div>
-          {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4">
+          <p className="font-bold">Warning:</p>
+          <p>Please review the transaction details in <b>your wallet before signing</b>.</p>
         </div>
 
         <div className="pb-3">
-          <div className="font-semibold">Extrinsic Info:</div>
-          {tx ? (
-            <div>
-              <span className="text-gray-500">Pallet: </span>
-              {tx.decodedCall.type} <br />
-              <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
-            </div>
-          ) : (
-            <p></p>
-          )}
+          <div className="font-semibold">Account:</div>
+          <span>{selectedAccount?.address} </span>
         </div>
-      </div>
-
-      {isContract && dryRunResult && (
         <div>
-          <DryRun
-            dryRunResult={dryRunResult}
-            useGasEstimates={useGasEstimates}
-            setUseGasEstimates={setUseGasEstimates}
-            originalGas={tx?.decodedCall.value.value.gas_limit}
-            callType={tx?.decodedCall.value.type}
-            chainProperties={chainProperties}
-          ></DryRun>
+          <div className="pb-3">
+            <div className="font-semibold">RPC:</div>
+            {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+          </div>
+
+          <div className="pb-3">
+            <div className="font-semibold">Extrinsic Info:</div>
+            {tx ? (
+              <div>
+                <span className="text-gray-500">Pallet: </span>
+                {tx.decodedCall.type} <br />
+                <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
+              </div>
+            ) : (
+              <p></p>
+            )}
+          </div>
         </div>
-      )}
 
-      <div className="flex justify-center items-center space-x-4">
-        <Button
-          onClick={async () => await sign()}
-          className="text-lg font-bold bg-pink-700 hover:bg-blue-600"
-        >
-          Sign
-        </Button>
-        <Button
-          onClick={handleTerminate}
-          className="text-lg font-bold bg-gray-400 hover:bg-red-600"
-        >
-          Cancel
-        </Button>
+        {isContract && dryRunResult && (
+          <div>
+            <DryRun
+              dryRunResult={dryRunResult}
+              useGasEstimates={useGasEstimates}
+              setUseGasEstimates={setUseGasEstimates}
+              originalGas={tx?.decodedCall.value.value.gas_limit}
+              callType={tx?.decodedCall.value.type}
+              chainProperties={chainProperties}
+            ></DryRun>
+          </div>
+        )}
+
+        <div className="flex justify-center items-center space-x-4">
+          <Button
+            onClick={async () => await sign()}
+            className="text-lg font-bold bg-pink-700 hover:bg-blue-600"
+          >
+            Sign
+          </Button>
+          <Button
+            onClick={handleTerminate}
+            className="text-lg font-bold bg-gray-400 hover:bg-red-600"
+          >
+            Cancel
+          </Button>
+        </div>
+
+        <Modal
+          isOpen={isModalOpen}
+          title={modalConfig.title}
+          message={modalConfig.message}
+          confirmText={modalConfig.confirmText}
+          confirmClass={modalConfig.confirmClass}
+          cancelText={modalConfig.cancelText}
+          showCancelButton={modalConfig.showCancelButton}
+          onConfirm={modalConfig.onConfirm}
+          onCancel={modalConfig.onCancel}
+        />
       </div>
-
-      <Modal
-        isOpen={isModalOpen}
-        title={modalConfig.title}
-        message={modalConfig.message}
-        confirmText={modalConfig.confirmText}
-        confirmClass={modalConfig.confirmClass}
-        cancelText={modalConfig.cancelText}
-        showCancelButton={modalConfig.showCancelButton}
-        onConfirm={modalConfig.onConfirm}
-        onCancel={modalConfig.onCancel}
-      />
-    </div>
-      }</>
+    }</>
   );
 };
