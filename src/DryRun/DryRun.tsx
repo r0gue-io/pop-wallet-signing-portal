@@ -114,35 +114,38 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
   return (
     <div>
       {/* Gas Estimates */}
-      {result.gas_consumed && (
-        <div className="mb-4">
-          <h3 className="text-md font-semibold">Gas Consumed</h3>
-          <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Ref Time</p>
-              <p>{pico_to_milli(result.gas_consumed.ref_time)}</p>
+      {(result.gas_consumed || result.gas_required) && (
+        <div className="flex space-x-4 mb-4">
+          {result.gas_consumed && (
+            <div className="flex-1">
+              <h3 className="text-md font-semibold">Gas Consumed</h3>
+              <div className="flex space-x-4 text-sm">
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Ref Time</p>
+                  <p>{picoToMilli(result.gas_consumed.ref_time)}</p>
+                </div>
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Proof Size</p>
+                  <p>{bytesToKB(result.gas_consumed.proof_size)} KB</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Proof Size</p>
-              <p>{result.gas_consumed.proof_size.toString()} bytes</p>
+          )}
+          {result.gas_required && (
+            <div className="flex-1">
+              <h3 className="text-md font-semibold">Gas Required</h3>
+              <div className="flex space-x-4 text-sm">
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Ref Time</p>
+                  <p>{picoToMilli(result.gas_required.ref_time)}</p>
+                </div>
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Proof Size</p>
+                  <p>{bytesToKB(result.gas_required.proof_size)} KB</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {result.gas_required && (
-        <div className="mb-4">
-          <h3 className="text-md font-semibold">Gas Required</h3>
-          <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Ref Time</p>
-              <p>{pico_to_milli(result.gas_required.ref_time)}</p>
-            </div>
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Proof Size</p>
-              <p>{result.gas_required.proof_size.toString()} bytes</p>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -368,7 +371,7 @@ export const InfoIcon = () => (
 )
 
 // convert picoseconds to milliseconds
-function pico_to_milli(pico: bigint): string {
+function picoToMilli(pico: bigint): string {
   // pico / 1e9 = MS
   const divisor = 1_000_000_000n;
   const whole = pico / divisor;
@@ -380,6 +383,10 @@ function pico_to_milli(pico: bigint): string {
 
   return `${wholeStr}.${fracStr} ms`;
 }
+
+  function bytesToKB(bytes: Number) {
+    return Math.trunc(Number(bytes) / 1024 * 100) / 100;
+  }
 
 
 function isOriginalGasSufficient(originalGas: { ref_time: bigint, proof_size: number }, gasRequired: {
