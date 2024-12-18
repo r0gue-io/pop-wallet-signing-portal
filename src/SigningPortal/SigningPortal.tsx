@@ -237,7 +237,7 @@ export const SigningPortal: React.FC = () => {
           title: "Signing Successful",
           message: "Pop CLI will submit the signed transaction. You can close the tab now.",
           confirmText: "Close Tab",
-          confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-600",
+          confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-500",
           showCancelButton: false,
           onConfirm: () => window.close(),
         });
@@ -317,14 +317,14 @@ export const SigningPortal: React.FC = () => {
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={async () => await sign()}
-            className="text-lg font-bold bg-pink-700 hover:bg-blue-600"
+            className="text-lg font-bold bg-pink-700 hover:bg-blue-500"
             disabled={loading}
           >
             Submit
           </Button>
           <Button
             onClick={handleTerminate}
-            className="text-lg font-bold bg-gray-400 hover:bg-red-600"
+            className="text-lg font-bold bg-violet-950 hover:bg-violet-800"
           >
             Cancel
           </Button>

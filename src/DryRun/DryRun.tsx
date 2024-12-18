@@ -228,7 +228,7 @@ export function DryRun({
               <ChevronDown isOpen={dryRunOpen} className=""/>
 
             </button>
-            <h3 id="hs-dry-run-success" className="text-gray-800 font-semibold dark:text-white"  onClick={() => setDryRunOpen(!dryRunOpen)}>
+            <h3 id="hs-dry-run-success" className="cursor-pointer text-gray-800 font-semibold dark:text-white"  onClick={() => setDryRunOpen(!dryRunOpen)}>
               Dry-run Outcome
             </h3>
           </div>
@@ -285,7 +285,7 @@ export function DryRun({
         <div className="flex items-center mt-4 space-x-2">
           <div
             className={`w-12 h-6 flex items-center cursor-pointer rounded-full p-1 duration-300 ease-in-out ${
-              useGasEstimates ? "bg-blue-600" : "bg-gray-300"
+              useGasEstimates ? "bg-blue-500" : "bg-gray-300"
             }`}
             onClick={() => setUseGasEstimates(!useGasEstimates)}
           >
@@ -298,8 +298,6 @@ export function DryRun({
           <span className="text-sm font-medium">Use Gas Estimates in Call</span>
         </div>
       </div>
-
-
     </div>
   );
 }
