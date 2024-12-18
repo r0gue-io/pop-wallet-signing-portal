@@ -287,7 +287,7 @@ export const SigningPortal: React.FC = () => {
         </div>
         <div>
           <div className="pb-3">
-            <div className="font-semibold">RPC: <span className="font-light text-gray-500">{rpc}</span></div>
+            <div className="font-semibold">RPC: <span className="font-light text-black">{rpc}</span></div>
             {rpc ? (
               <p>
                 <a
