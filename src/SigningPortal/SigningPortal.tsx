@@ -39,6 +39,8 @@ export const SigningPortal: React.FC = () => {
   const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [signing, setSigning] = useState(false);
+
   const [modalConfig, setModalConfig] = useState<{
     title: string;
     message: string;
@@ -200,7 +202,7 @@ export const SigningPortal: React.FC = () => {
       setError("No account selected.");
       return;
     }
-    setLoading(true); // Disable button while signing.
+    setSigning(true); // Disable button while signing.
 
     let maybeModifiedTx = null;
 
@@ -225,11 +227,20 @@ export const SigningPortal: React.FC = () => {
     }
 
     let payload: HexString | null = null;
-    if (maybeModifiedTx) {
-      payload = await maybeModifiedTx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
-    } else {
-      payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+
+    try {
+      if (maybeModifiedTx) {
+        payload = await maybeModifiedTx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+      } else {
+        payload = await tx?.sign(selectedAccount?.polkadotSigner as PolkadotSigner);
+      }
+    } catch (err) {
+      setSigning(false);
+      console.log(err);
+      setError("Cancelled");
+      return;
     }
+
 
     try {
       let response = await submitData(payload?.toString());
@@ -251,6 +262,7 @@ export const SigningPortal: React.FC = () => {
     } finally {
       setLoading(false);
     }
+    setSigning(false);
   };
 
   // Render the UI
@@ -319,7 +331,7 @@ export const SigningPortal: React.FC = () => {
           <Button
             onClick={async () => await sign()}
             className="text-lg font-bold bg-pink-700 hover:bg-blue-500"
-            disabled={loading}
+            disabled={signing}
           >
             Submit
           </Button>
