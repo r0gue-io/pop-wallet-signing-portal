@@ -64,7 +64,11 @@ export const SigningPortal: React.FC = () => {
       setError(null);
       try {
         const result = await fetchPayload();
-        setRpc(result.chain_rpc);
+        if (result.chain_rpc.endsWith("/")){
+          setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
+        } else {
+          setRpc(result.chain_rpc);
+        }
         setOriginalCallData(result.call_data);
         let client = createClient(withPolkadotSdkCompat(getWsProvider(result.chain_rpc)));
         setClient(client);
@@ -298,15 +302,16 @@ export const SigningPortal: React.FC = () => {
                 >
                   polkadot.js.org
                 </a>
-                <span className="pr-2 pl-2">|</span>
-                <a
-                  href={`https://dev.papi.how/explorer#networkId=localhost&endpoint=${encodeURIComponent(rpc)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-500 underline hover:text-pink-700"
-                >
-                  dev.papi.how
-                </a>
+                {/* This issue must be resolved first: https://github.com/polkadot-api/papi-console/issues/24 */}
+                {/*<span className="pr-2 pl-2">|</span>*/}
+                {/*<a*/}
+                {/*  href={`https://dev.papi.how/explorer#networkId=localhost&endpoint=${encodeURIComponent(rpc)}`}*/}
+                {/*  target="_blank"*/}
+                {/*  rel="noopener noreferrer"*/}
+                {/*  className="text-blue-500 underline hover:text-pink-700"*/}
+                {/*>*/}
+                {/*  dev.papi.how*/}
+                {/*</a>*/}
               </p>
             ) : (
               <p>No RPC loaded.</p>
