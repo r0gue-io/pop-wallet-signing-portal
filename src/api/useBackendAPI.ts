@@ -12,8 +12,8 @@ export interface Response {
 // Define types for API responses
 type SubmitResponse = Response;
 
-// Define the base URL for the backend
-const BASE_URL = "http://localhost:9090";
+// Define the base URL for the backend.
+const BASE_URL = "";
 
 const useBackendAPI = () => {
   const fetchPayload = useCallback(async (): Promise<TransactionData> => {

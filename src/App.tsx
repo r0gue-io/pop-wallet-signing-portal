@@ -1,26 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { ExtensionProvider } from "./context/ExtensionProvider"
-import { AccountProvider } from "./context/AccountProvider"
 import {SigningPortal} from "./SigningPortal"
+import { AccountContextProvider } from "@/context/AccountsContext.tsx"
+import { config } from './walletConfigs'
+import { ReactiveDotProvider } from '@reactive-dot/react'
+import { WalletManager } from "@/WalletManager.tsx"
 
-export default function LoginForm() {
+export default function App() {
   return (
     <div className="flex items-center justify-center mt-6">
       <Card className="w-full max-w-xl">
         <CardHeader>
-          <CardTitle className="text-4xl text-center flex items-center justify-center gap-2">
+          <CardTitle className="text-4xl pb-6 text-center flex items-center justify-center gap-2">
             <PopLogo />
             <span>CLI: <span className="font-light">Signing Portal</span></span>
           </CardTitle>
         </CardHeader>
         <CardContent className="grid gap-4">
-          <ExtensionProvider>
-            <AccountProvider>
+          <ReactiveDotProvider config={config}>
+          <AccountContextProvider>
               <div className="overflow-auto break-words whitespace-pre-wrap">
+                <WalletManager/>
                 <SigningPortal />
               </div>
-            </AccountProvider>
-          </ExtensionProvider>
+          </AccountContextProvider>
+          </ReactiveDotProvider>
         </CardContent>
       </Card>
     </div>
