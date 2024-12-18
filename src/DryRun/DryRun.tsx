@@ -245,7 +245,7 @@ export function DryRun({
             ) : (
               <div className="flex items-center space-x-2">
                 <span className="text-red-600 dark:text-red-400 font-medium">fails</span>
-                <ErrorIcon />
+                <ErrorIcon size={8}/>
               </div>
             )}
           </div>
@@ -327,11 +327,11 @@ const SuccessIcon = () => (
             </span>
 )
 
-const ErrorIcon = () => (
+export const ErrorIcon = ({size}: {size: number}) => (
   <span
-    className="inline-flex justify-center items-center size-10 rounded-full border-4 border-red-100 bg-red-200 text-red-800 dark:border-red-900 dark:bg-red-800 dark:text-red-400">
+    className={`inline-flex justify-center items-center size-${size} rounded-full border-4 border-red-100 bg-red-200 text-red-800 dark:border-red-900 dark:bg-red-800 dark:text-red-400`}>
   <svg
-    className="shrink-0 size-6"
+    className={`shrink-0 size-${size-2}`}
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}

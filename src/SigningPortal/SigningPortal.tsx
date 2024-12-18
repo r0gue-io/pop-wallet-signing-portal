@@ -116,7 +116,6 @@ export const SigningPortal: React.FC = () => {
   }, [selectedAccount, isContract, tx, api]);
 
   const handleTerminate = async () => {
-    setLoading(true);
     setError(null);
 
     setModalConfig({
@@ -124,6 +123,7 @@ export const SigningPortal: React.FC = () => {
       message: "Are you sure you want to cancel the signing? This will close the server and tab.",
       confirmText: "Yes, Cancel",
       cancelText: "Go Back",
+      confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-300 hover:text-gray-800",
       onConfirm: async () => {
         try {
           await terminate();
@@ -131,11 +131,10 @@ export const SigningPortal: React.FC = () => {
         } catch (err) {
           console.log(err);
           setError("Failed to terminate the server. Is it already closed?");
-        } finally {
-          setLoading(false);
         }
         console.log("Server closed.");
         setIsModalOpen(false);
+        setError("Browser prevented tab close. Please close manually.");
       },
       onCancel: () => setIsModalOpen(false),
     });
@@ -249,9 +248,14 @@ export const SigningPortal: React.FC = () => {
           title: "Signing Successful",
           message: "Pop CLI will submit the signed transaction. You can close the tab now.",
           confirmText: "Close Tab",
-          confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-500",
+          confirmClass: "px-4 py-2 bg-pink-700 text-white rounded hover:bg-blue-300 hover:text-gray-800",
           showCancelButton: false,
-          onConfirm: () => window.close(),
+          onConfirm: () => {
+            window.close()
+            setIsModalOpen(false)
+            setError("Browser prevented tab close. Please close manually.")
+          },
+          onCancel: () => setIsModalOpen(false),
         });
         setIsModalOpen(true);
       } else {
@@ -268,9 +272,14 @@ export const SigningPortal: React.FC = () => {
   // Render the UI
   return (
     <> {selectedAccount &&
-      <div style={{ padding: "20px" }}>
+      <div>
         {loading && <p>Loading...</p>}
-        {error && <p style={{ color: "red" }}>Error: {error}</p>}
+        {error &&
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+            {/*<ErrorIcon size={6}/>*/}
+            <p>Error: {error}</p>
+          </div>
+        }
 
         <div className="pb-3">
           <div className="font-semibold">Account:</div>
@@ -278,16 +287,25 @@ export const SigningPortal: React.FC = () => {
         </div>
         <div>
           <div className="pb-3">
-            <div className="font-semibold">RPC:</div>
+            <div className="font-semibold">RPC: <span className="font-light text-gray-500">{rpc}</span></div>
             {rpc ? (
               <p>
                 <a
                   href={`https://polkadot.js.org/apps/?rpc=${encodeURIComponent(rpc)}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-blue-500 underline hover:text-blue-700"
+                  className="text-blue-500 underline hover:text-pink-700"
                 >
-                  {rpc}
+                  polkadot.js.org
+                </a>
+                <span className="pr-2 pl-2">|</span>
+                <a
+                  href={`https://dev.papi.how/explorer#networkId=localhost&endpoint=${encodeURIComponent(rpc)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline hover:text-pink-700"
+                >
+                  dev.papi.how
                 </a>
               </p>
             ) : (
@@ -296,17 +314,21 @@ export const SigningPortal: React.FC = () => {
           </div>
 
           <div className="pb-3">
-            <div className="font-semibold">Extrinsic Info:</div>
+            <div className="font-semibold pb-2">Extrinsic Info:</div>
             {tx ? (
-              <div>
-                <span className="text-gray-500">Pallet: </span>
-                {tx.decodedCall.type} <br />
-                <span className="text-gray-500">Dispatchable:</span> {tx?.decodedCall.value.type}
+              <div className="flex flex-wrap gap-x-4">
+                <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                  <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.type}
+                </div>
+                <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                  <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
+                </div>
               </div>
             ) : (
               <p></p>
             )}
           </div>
+
         </div>
 
         {isContract && dryRunResult && (
@@ -322,15 +344,22 @@ export const SigningPortal: React.FC = () => {
           </div>
         )}
 
-        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
-          <InfoIcon/>
-          <p>Please review the transaction details <b>in your wallet before signing</b>.</p>
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6 flex flex-col">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <InfoIcon />
+              <span className="ml-2 font-extrabold">Note</span>
+            </div>
+          </div>
+          <div className="mt-2">
+            <p>Please review the transaction details <b>in your wallet before signing</b>.</p>
+          </div>
         </div>
 
         <div className="flex justify-center items-center space-x-4">
           <Button
             onClick={async () => await sign()}
-            className="text-lg font-bold bg-pink-700 hover:bg-blue-500"
+            className="text-lg font-bold bg-pink-700 hover:bg-blue-300 hover:text-gray-800"
             disabled={signing}
           >
             Submit
