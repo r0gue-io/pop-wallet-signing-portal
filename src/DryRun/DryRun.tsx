@@ -228,7 +228,7 @@ export function DryRun({
               <ChevronDown isOpen={dryRunOpen} className=""/>
 
             </button>
-            <h3 id="hs-dry-run-success" className="text-gray-800 font-semibold dark:text-white">
+            <h3 id="hs-dry-run-success" className="text-gray-800 font-semibold dark:text-white"  onClick={() => setDryRunOpen(!dryRunOpen)}>
               Dry-run Outcome
             </h3>
           </div>
