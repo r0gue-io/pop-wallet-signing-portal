@@ -199,6 +199,7 @@ export const SigningPortal: React.FC = () => {
       setError("No account selected.");
       return;
     }
+    setLoading(true); // Disable button while signing.
 
     let maybeModifiedTx = null;
 
@@ -304,8 +305,9 @@ export const SigningPortal: React.FC = () => {
           <Button
             onClick={async () => await sign()}
             className="text-lg font-bold bg-pink-700 hover:bg-blue-600"
+            disabled={loading}
           >
-            Sign
+            Submit
           </Button>
           <Button
             onClick={handleTerminate}
