@@ -5,6 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export interface ChainProperties {
+  ss58Format: number;
+  tokenDecimals: number;
+  tokenSymbol: string;
+}
+
 export const decimalSeparatorDisplay = "."
 export const decimalSeparatorsInput = [".", ","]
 export const decimalSeparatorRegex = ",|."

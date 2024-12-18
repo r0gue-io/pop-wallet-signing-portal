@@ -20,11 +20,12 @@ import { useAccounts } from '@/context/AccountsContext'
 import { Button } from "@/components/ui/button.tsx"
 import { Modal } from "@/Modal"
 import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
+import { ChainProperties } from "@/lib/utils.ts"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
 
-  const [_client, setClient] = useState<PolkadotClient | null>(null);
+  const [client, setClient] = useState<PolkadotClient | null>(null);
   const [api, setApi] = useState<UnsafeApi<any> | null>(null);
   const [_originalCallData, setOriginalCallData] = useState<Uint8Array | null>(null);
   const [_callData, setCallData] = useState<Binary | null>(null);
@@ -35,7 +36,7 @@ export const SigningPortal: React.FC = () => {
   const [isContract, setIsContract] = useState<boolean>(false);
   const [dryRunResult, setDryRunResult] = useState<any | null>(null);
   const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
-
+  const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -52,7 +53,6 @@ export const SigningPortal: React.FC = () => {
   });
 
   const { selectedAccount } = useAccounts()
-  console.log(selectedAccount);
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -67,6 +67,7 @@ export const SigningPortal: React.FC = () => {
         setClient(client);
         let api = client.getUnsafeApi();
         setApi(api);
+
         // binaryFromBytes was not working. Converting to hex and back works.
         let binaryFromBytes = Binary.fromBytes(result.call_data);
         let hex: HexString = binaryFromBytes.asHex();
@@ -75,7 +76,6 @@ export const SigningPortal: React.FC = () => {
         const tx = await api.txFromCallData(callData);
         setTx(tx);
         setIsContract(tx.decodedCall.type === "Contracts");
-        console.log(tx.decodedCall);
 
         // Automatically trigger dry run if it's a contract call
         if (tx.decodedCall.type === "Contracts") {
@@ -91,6 +91,19 @@ export const SigningPortal: React.FC = () => {
 
     loadPayload();
   }, [fetchPayload]);
+
+  useEffect(() => {
+    const loadChainProperties = async () => {
+      if (client) {
+        let chainSpec = await client.getChainSpecData();
+        if (chainSpec.properties.ss58Format && chainSpec.properties.tokenDecimals && chainSpec.properties.tokenSymbol) {
+          setChainProperties(chainSpec.properties)
+        }
+      }
+    }
+
+    loadChainProperties();
+  }, [client]);
 
   // Re-run dry run if selected account changes
   useEffect(() => {
@@ -176,7 +189,6 @@ export const SigningPortal: React.FC = () => {
         break;
     }
     setDryRunResult(result);
-    console.log(result);
   };
 
   const sign = async () => {
@@ -209,8 +221,6 @@ export const SigningPortal: React.FC = () => {
         maybeModifiedTx = await api.tx[pallet][callName](args)
       }
     }
-
-    console.log(maybeModifiedTx);
 
     let payload: HexString | null = null;
     if (maybeModifiedTx) {
@@ -280,6 +290,7 @@ export const SigningPortal: React.FC = () => {
             setUseGasEstimates={setUseGasEstimates}
             originalGas={tx?.decodedCall.value.value.gas_limit}
             callType={tx?.decodedCall.value.type}
+            chainProperties={chainProperties}
           ></DryRun>
         </div>
       )}

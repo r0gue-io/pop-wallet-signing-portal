@@ -4,6 +4,7 @@
 import { Binary } from "polkadot-api";
 import React from "react"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx"
+import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
 
 export interface CodeUploadResult {
   type?: string;
@@ -12,7 +13,7 @@ export interface CodeUploadResult {
     value?: any;
     type?: string;
       code_hash: Binary,
-      deposit: bigint
+      deposit: bigint | null
   };
 }
 
@@ -49,10 +50,11 @@ interface DryRunProps {
   useGasEstimates: boolean;
   setUseGasEstimates: (value: boolean) => void;
   originalGas: {ref_time: bigint, proof_size: number}
+  chainProperties: ChainProperties;
 }
 
 // CodeUpload Component
-const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void }> = ({ result , setSuccess}) => {
+const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void , chainProperties: ChainProperties}> = ({ result , setSuccess, chainProperties}) => {
   const isSuccess = (result: CodeUploadResult): boolean => {
     return result.success as boolean;
   };
@@ -68,9 +70,14 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
       {/* Result Status */}
       {isSuccess(result) ? (
         <div>
-          <div className="text-sm bg-gray-200 p-2 rounded">
+          <div className="text-sm bg-gray-200 p-2 pb-4 rounded">
             <p>Code Hash: {result.value?.code_hash.asHex()}</p>
-            <p>Storage Deposit: {result.value?.deposit.toString()}</p>
+          </div>
+          <div className="mb-4">
+            <h3 className="text-md font-semibold">Storage Deposit</h3>
+            <div className="bg-gray-200 p-2 rounded text-sm">
+              {formatCurrency(result.value?.deposit as bigint, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}
+            </div>
           </div>
           <div className="text-green-600 font-bold flex items-center">
             The call will be successful.
@@ -91,7 +98,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
 };
 
 // ContractExecution Component
-const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void}> = ({ result, originalGas, useGasEstimates, setSuccess}) => {
+const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void, chainProperties: ChainProperties}> = ({ result, originalGas, useGasEstimates, setSuccess, chainProperties}) => {
 
   const isSuccess = (result: ContractExecutionResult) => {
     return result.result?.success &&
@@ -113,7 +120,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
           <div className="flex space-x-4 text-sm">
             <div className="bg-gray-200 p-2 rounded">
               <p>Ref Time</p>
-              <p>{result.gas_consumed.ref_time.toString()} ns</p>
+              <p>{pico_to_milli(result.gas_consumed.ref_time)}</p>
             </div>
             <div className="bg-gray-200 p-2 rounded">
               <p>Proof Size</p>
@@ -129,7 +136,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
           <div className="flex space-x-4 text-sm">
             <div className="bg-gray-200 p-2 rounded">
               <p>Ref Time</p>
-              <p>{result.gas_required.ref_time.toString()} ns</p>
+              <p>{pico_to_milli(result.gas_required.ref_time)}</p>
             </div>
             <div className="bg-gray-200 p-2 rounded">
               <p>Proof Size</p>
@@ -144,7 +151,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
         <div className="mb-4">
           <h3 className="text-md font-semibold">Storage Deposit</h3>
           <div className="bg-gray-200 p-2 rounded text-sm">
-            {result.storage_deposit.type}: {result.storage_deposit.value.toString()}
+            {result.storage_deposit.type}: {formatCurrency(result.storage_deposit.value, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}
           </div>
         </div>
       )}
@@ -195,7 +202,8 @@ export function DryRun({
                          useGasEstimates,
                          setUseGasEstimates,
                          callType,
-                         originalGas
+                         originalGas,
+                         chainProperties
                        }: DryRunProps): JSX.Element {
 
   const [success, setSuccess] = React.useState(false);
@@ -260,13 +268,14 @@ export function DryRun({
             `}
             >
               {callType === "upload_code" ? (
-                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} />
+                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} chainProperties={chainProperties}/>
               ) : (
                 <ContractExecution
                   result={dryRunResult as ContractExecutionResult}
                   originalGas={originalGas}
                   useGasEstimates={useGasEstimates}
                   setSuccess={setSuccess}
+                  chainProperties={chainProperties}
                 />
               )}
             </div>
@@ -360,19 +369,20 @@ const InfoIcon = () => (
 
 )
 
-// TODO: need to get decimals of chain
-//@ts-ignore
-function formatBigIntToUnit(value: bigint, decimals: number): string {
-  const factor = BigInt(10 ** decimals)
-  const formattedValue = value * factor / BigInt(1000000)
+// convert picoseconds to milliseconds
+function pico_to_milli(pico: bigint): string {
+  // pico / 1e9 = MS
+  const divisor = 1_000_000_000n;
+  const whole = pico / divisor;
+  const fraction = pico % divisor;
 
-  // Convert the formatted value into a string with a fixed number of decimal places
-  const integerPart = formattedValue / factor
-  const decimalPart = formattedValue % factor
+  // Convert to string with precise decimal placement
+  const wholeStr = whole.toString();
+  const fracStr = (fraction / 1_000_000_0n).toString().padStart(2, '0');
 
-  const decimalString = decimalPart.toString().padStart(decimals, "0").slice(0, decimals)
-  return `${integerPart}.${decimalString}`
+  return `${wholeStr}.${fracStr} ms`;
 }
+
 
 function isOriginalGasSufficient(originalGas: { ref_time: bigint, proof_size: number }, gasRequired: {
   ref_time: bigint,
