@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button.tsx"
 import { Modal } from "@/Modal"
 import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
+import { InfoIcon } from "@/DryRun/DryRun.tsx"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -259,11 +260,6 @@ export const SigningPortal: React.FC = () => {
         {loading && <p>Loading...</p>}
         {error && <p style={{ color: "red" }}>Error: {error}</p>}
 
-        <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 my-4">
-          <p className="font-bold">Warning:</p>
-          <p>Please review the transaction details in <b>your wallet before signing</b>.</p>
-        </div>
-
         <div className="pb-3">
           <div className="font-semibold">Account:</div>
           <span>{selectedAccount?.address} </span>
@@ -313,6 +309,11 @@ export const SigningPortal: React.FC = () => {
             ></DryRun>
           </div>
         )}
+
+        <div className="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6">
+          <InfoIcon/>
+          <p>Please review the transaction details <b>in your wallet before signing</b>.</p>
+        </div>
 
         <div className="flex justify-center items-center space-x-4">
           <Button

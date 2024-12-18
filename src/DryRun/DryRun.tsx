@@ -347,9 +347,9 @@ const ErrorIcon = () => (
 )
 
 //@ts-ignore
-const InfoIcon = () => (
+export const InfoIcon = () => (
   <svg
-    className="shrink-0 size-4 text-blue-600 mt-1"
+    className="shrink-0 size-6 text-blue-600 mt-1 mb-2"
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
