@@ -271,7 +271,20 @@ export const SigningPortal: React.FC = () => {
         <div>
           <div className="pb-3">
             <div className="font-semibold">RPC:</div>
-            {rpc ? <p>{rpc}</p> : <p>No RPC loaded.</p>}
+            {rpc ? (
+              <p>
+                <a
+                  href={`https://polkadot.js.org/apps/?rpc=${encodeURIComponent(rpc)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-500 underline hover:text-blue-700"
+                >
+                  {rpc}
+                </a>
+              </p>
+            ) : (
+              <p>No RPC loaded.</p>
+            )}
           </div>
 
           <div className="pb-3">
