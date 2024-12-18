@@ -10,7 +10,7 @@ export default function App() {
     <div className="flex items-center justify-center mt-6">
       <Card className="w-full max-w-xl">
         <CardHeader>
-          <CardTitle className="text-4xl pb-6 text-center flex items-center justify-center gap-2">
+          <CardTitle className="text-4xl text-center flex items-center justify-center gap-2">
             <PopLogo />
             <span>CLI: <span className="font-light">Signing Portal</span></span>
           </CardTitle>

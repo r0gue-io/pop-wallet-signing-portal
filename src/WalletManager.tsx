@@ -92,7 +92,7 @@ export const WalletManager = () => {
                       selectAccount(undefined)
                     }}
                   >
-                    Logout
+                    Disconnect
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

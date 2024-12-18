@@ -26,15 +26,15 @@ export const Modal: React.FC<ModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-lg w-96 p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={onCancel}>
+      <div className="bg-white rounded-lg shadow-lg w-96 p-6" onClick={(e) => e.stopPropagation() /* Prevents close when clicking inside modal. */ } >
         <h2 className="text-lg font-medium text-center mb-4">{title}</h2>
         <p className="text-sm text-gray-600 text-center mb-6">{message}</p>
         <div className="flex justify-center gap-4">
           {showCancelButton && (
             <Button
               onClick={onCancel}
-              className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+              className="px-4 py-2 bg-violet-950 rounded hover:bg-violet-800"
             >
               {cancelText}
             </Button>

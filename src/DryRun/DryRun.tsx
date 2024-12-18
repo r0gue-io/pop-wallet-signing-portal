@@ -114,35 +114,38 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
   return (
     <div>
       {/* Gas Estimates */}
-      {result.gas_consumed && (
-        <div className="mb-4">
-          <h3 className="text-md font-semibold">Gas Consumed</h3>
-          <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Ref Time</p>
-              <p>{pico_to_milli(result.gas_consumed.ref_time)}</p>
+      {(result.gas_consumed || result.gas_required) && (
+        <div className="flex space-x-4 mb-4">
+          {result.gas_consumed && (
+            <div className="flex-1">
+              <h3 className="text-md font-semibold">Gas Consumed</h3>
+              <div className="flex space-x-4 text-sm">
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Ref Time</p>
+                  <p>{picoToMilli(result.gas_consumed.ref_time)}</p>
+                </div>
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Proof Size</p>
+                  <p>{bytesToKB(result.gas_consumed.proof_size)} KB</p>
+                </div>
+              </div>
             </div>
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Proof Size</p>
-              <p>{result.gas_consumed.proof_size.toString()} bytes</p>
+          )}
+          {result.gas_required && (
+            <div className="flex-1">
+              <h3 className="text-md font-semibold">Gas Required</h3>
+              <div className="flex space-x-4 text-sm">
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Ref Time</p>
+                  <p>{picoToMilli(result.gas_required.ref_time)}</p>
+                </div>
+                <div className="bg-gray-200 p-2 rounded">
+                  <p>Proof Size</p>
+                  <p>{bytesToKB(result.gas_required.proof_size)} KB</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-
-      {result.gas_required && (
-        <div className="mb-4">
-          <h3 className="text-md font-semibold">Gas Required</h3>
-          <div className="flex space-x-4 text-sm">
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Ref Time</p>
-              <p>{pico_to_milli(result.gas_required.ref_time)}</p>
-            </div>
-            <div className="bg-gray-200 p-2 rounded">
-              <p>Proof Size</p>
-              <p>{result.gas_required.proof_size.toString()} bytes</p>
-            </div>
-          </div>
+          )}
         </div>
       )}
 
@@ -228,7 +231,7 @@ export function DryRun({
               <ChevronDown isOpen={dryRunOpen} className=""/>
 
             </button>
-            <h3 id="hs-dry-run-success" className="text-gray-800 font-semibold dark:text-white">
+            <h3 id="hs-dry-run-success" className="cursor-pointer text-gray-800 font-semibold dark:text-white"  onClick={() => setDryRunOpen(!dryRunOpen)}>
               Dry-run Outcome
             </h3>
           </div>
@@ -242,7 +245,7 @@ export function DryRun({
             ) : (
               <div className="flex items-center space-x-2">
                 <span className="text-red-600 dark:text-red-400 font-medium">fails</span>
-                <ErrorIcon />
+                <ErrorIcon size={8}/>
               </div>
             )}
           </div>
@@ -285,7 +288,7 @@ export function DryRun({
         <div className="flex items-center mt-4 space-x-2">
           <div
             className={`w-12 h-6 flex items-center cursor-pointer rounded-full p-1 duration-300 ease-in-out ${
-              useGasEstimates ? "bg-blue-600" : "bg-gray-300"
+              useGasEstimates ? "bg-blue-500" : "bg-gray-300"
             }`}
             onClick={() => setUseGasEstimates(!useGasEstimates)}
           >
@@ -298,8 +301,6 @@ export function DryRun({
           <span className="text-sm font-medium">Use Gas Estimates in Call</span>
         </div>
       </div>
-
-
     </div>
   );
 }
@@ -326,11 +327,11 @@ const SuccessIcon = () => (
             </span>
 )
 
-const ErrorIcon = () => (
+export const ErrorIcon = ({size}: {size: number}) => (
   <span
-    className="inline-flex justify-center items-center size-10 rounded-full border-4 border-red-100 bg-red-200 text-red-800 dark:border-red-900 dark:bg-red-800 dark:text-red-400">
+    className={`inline-flex justify-center items-center size-${size} rounded-full border-4 border-red-100 bg-red-200 text-red-800 dark:border-red-900 dark:bg-red-800 dark:text-red-400`}>
   <svg
-    className="shrink-0 size-6"
+    className={`shrink-0 size-${size-2}`}
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -349,9 +350,9 @@ const ErrorIcon = () => (
 )
 
 //@ts-ignore
-const InfoIcon = () => (
+export const InfoIcon = () => (
   <svg
-    className="shrink-0 size-4 text-blue-600 mt-1"
+    className="shrink-0 size-6 text-blue-600 mt-1 mb-2"
     xmlns="http://www.w3.org/2000/svg"
     width={24}
     height={24}
@@ -370,7 +371,7 @@ const InfoIcon = () => (
 )
 
 // convert picoseconds to milliseconds
-function pico_to_milli(pico: bigint): string {
+function picoToMilli(pico: bigint): string {
   // pico / 1e9 = MS
   const divisor = 1_000_000_000n;
   const whole = pico / divisor;
@@ -382,6 +383,10 @@ function pico_to_milli(pico: bigint): string {
 
   return `${wholeStr}.${fracStr} ms`;
 }
+
+  function bytesToKB(bytes: Number) {
+    return Math.trunc(Number(bytes) / 1024 * 100) / 100;
+  }
 
 
 function isOriginalGasSufficient(originalGas: { ref_time: bigint, proof_size: number }, gasRequired: {
