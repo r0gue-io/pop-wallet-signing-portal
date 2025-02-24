@@ -22,6 +22,7 @@ import { Modal } from "@/Modal"
 import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
+import { CostSummary } from "@/CostSummary"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -35,6 +36,7 @@ export const SigningPortal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isContract, setIsContract] = useState<boolean>(false);
+  const [isChainRegistrar, setIsChainRegistrar] = useState<boolean>(false);
   const [dryRunResult, setDryRunResult] = useState<any | null>(null);
   const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
@@ -63,7 +65,11 @@ export const SigningPortal: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchPayload();
+        // const result = await fetchPayload();
+        const result = {
+          chain_rpc: "ws://127.0.0.1:59830",
+          call_data: Binary.fromHex("0x4605").asBytes(),
+        }
         if (result.chain_rpc.endsWith("/")){
           setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
         } else {
@@ -81,12 +87,18 @@ export const SigningPortal: React.FC = () => {
         let callData = Binary.fromHex(hex);
         setCallData(callData);
         const tx = await api.txFromCallData(callData);
+        // console.log(tx.decodedCall.type);
+        // console.log(tx.decodedCall.value.type);
         setTx(tx);
         setIsContract(tx.decodedCall.type === "Contracts");
 
         // Automatically trigger dry run if it's a contract call
         if (tx.decodedCall.type === "Contracts") {
           dryRun(tx, api);
+        }
+        // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
+        if (tx.decodedCall.type === "Registrar" && (tx.decodedCall.value.type === "reserve" || tx.decodedCall.value.type === "register")) {
+          setIsChainRegistrar(true);
         }
       } catch (err) {
         console.log(err);
@@ -320,6 +332,7 @@ export const SigningPortal: React.FC = () => {
           <div className="pb-3">
             <div className="font-semibold pb-2">Extrinsic Info:</div>
             {tx ? (
+              <>
               <div className="flex flex-wrap gap-x-4">
                 <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
                   <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.type}
@@ -328,6 +341,15 @@ export const SigningPortal: React.FC = () => {
                   <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
                 </div>
               </div>
+              {isChainRegistrar && (
+                <CostSummary 
+                  fees={1000} 
+                  deposit={10} 
+                  accountBalance={100}
+                  // accountBalance={selectedAccount?.balance || 0} 
+                />
+              )}
+              </>
             ) : (
               <p></p>
             )}
