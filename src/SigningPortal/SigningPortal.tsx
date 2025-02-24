@@ -127,9 +127,14 @@ export const SigningPortal: React.FC = () => {
     const loadChainProperties = async () => {
       if (client) {
         let chainSpec = await client.getChainSpecData();
-        if (chainSpec.properties.ss58Format && chainSpec.properties.tokenDecimals && chainSpec.properties.tokenSymbol) {
-          setChainProperties(chainSpec.properties)
-        }
+        // Extract properties & provide default values for missing ones
+        let updatedProperties: ChainProperties = {
+          ss58Format: chainSpec.properties.ss58Format ?? 42,
+          tokenDecimals: chainSpec.properties.tokenDecimals ?? 12,
+          tokenSymbol: chainSpec.properties.tokenSymbol ?? "UNIT",
+        };
+
+        setChainProperties(updatedProperties);
       }
     }
 
