@@ -5,7 +5,7 @@ import { ChevronDown } from "@/components/ui/chevron-down.tsx";
 interface CostSummaryProps {
   fees: bigint;
   deposit: bigint;
-  accountBalance: number;
+  accountBalance: bigint;
   chainProperties: ChainProperties;
 }
 
@@ -45,7 +45,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
             <div className="flex justify-between items-center">
               <h4 className="text-md font-semibold">Your Balance:</h4>
               <div className={`px-3 py-1 rounded font-bold ${isInsufficientFunds ? "bg-red-100 text-red-700 border border-red-400" : "bg-green-100 text-green-700 border border-green-400"}`}>
-                {accountBalance}
+                {formatCurrency(accountBalance, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}
               </div>
             </div>
 

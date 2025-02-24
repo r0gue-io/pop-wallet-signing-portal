@@ -23,6 +23,7 @@ import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
 import { CostSummary } from "@/CostSummary"
+//TODO:
 import { testCallData } from "../../../test";
 
 export const SigningPortal: React.FC = () => {
@@ -45,6 +46,7 @@ export const SigningPortal: React.FC = () => {
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null)
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -133,6 +135,17 @@ export const SigningPortal: React.FC = () => {
 
     loadChainProperties();
   }, [client]);
+
+  useEffect(() => {
+    const getSelectedAccountFreeBalance = async () => {
+      // @ts-ignore
+      api.query.System.Account.watchValue(selectedAccount?.address).subscribe((ev) => {
+        setBalanceSelectedAccount(ev.data.free);
+      });
+    };
+
+    getSelectedAccountFreeBalance();
+  }, [api, selectedAccount]);
 
   // Re-run dry run if selected account changes
   useEffect(() => {
@@ -394,7 +407,7 @@ export const SigningPortal: React.FC = () => {
                 <CostSummary 
                   fees={feesEstimation} 
                   deposit={deposit} 
-                  accountBalance={100}
+                  accountBalance={balanceSelectedAccount as bigint}
                   chainProperties={chainProperties}
                 />
               )}
