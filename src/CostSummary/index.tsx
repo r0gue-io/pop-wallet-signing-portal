@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx";
 
 interface CostSummaryProps {
-  fees: number;
-  deposit: number;
+  fees: bigint;
+  deposit: bigint;
   accountBalance: number;
+  chainProperties: ChainProperties;
 }
 
-export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, accountBalance }) => {
+export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, accountBalance, chainProperties }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const totalCost = fees + deposit;
@@ -26,17 +28,17 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
         <div className="mt-3 space-y-2">
           <div className="flex justify-between items-center">
             <span className="text-gray-600 font-semibold">Fees:</span>
-            <span className="text-gray-900 font-light">{fees}</span>
+            <span className="text-gray-900 font-light">{formatCurrency(fees, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-gray-600 font-semibold">Storage Deposit:</span>
-            <span className="text-gray-900 font-light">{deposit}</span>
+            <span className="text-gray-900 font-light">{formatCurrency(deposit, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
           </div>
 
           <div className="flex justify-between items-center">
             <span className="text-gray-600 font-bold">Total Cost:</span>
-            <span className="text-gray-900 font-bold">{totalCost}</span>
+            <span className="text-gray-900 font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
           </div>
 
           <div className="space-y-2">
@@ -50,7 +52,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
             {isInsufficientFunds && (
               <div className="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
                 <p className="font-semibold">Insufficient Funds</p>
-                <p>You need at least <span className="font-bold">{totalCost} UNIT</span> to complete this transaction.</p>
+                <p>You need at least <span className="font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> to complete this transaction.</p>
               </div>
             )}
           </div>

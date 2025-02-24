@@ -23,6 +23,7 @@ import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
 import { CostSummary } from "@/CostSummary"
+import { testCallData } from "../../../test";
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -37,6 +38,8 @@ export const SigningPortal: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [isContract, setIsContract] = useState<boolean>(false);
   const [isChainRegistrar, setIsChainRegistrar] = useState<boolean>(false);
+  const [feesEstimation, setFeesEstimation] = useState<bigint>(0n);
+  const [deposit, setDeposit] = useState<bigint>(0n);
   const [dryRunResult, setDryRunResult] = useState<any | null>(null);
   const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
@@ -65,10 +68,15 @@ export const SigningPortal: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
+        // TODO:
         // const result = await fetchPayload();
+        // const result = {
+        //   chain_rpc: "ws://127.0.0.1:59830",
+        //   call_data: Binary.fromHex("0x4605").asBytes(),
+        // }
         const result = {
           chain_rpc: "ws://127.0.0.1:59830",
-          call_data: Binary.fromHex("0x4605").asBytes(),
+          call_data: testCallData,
         }
         if (result.chain_rpc.endsWith("/")){
           setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
@@ -91,6 +99,8 @@ export const SigningPortal: React.FC = () => {
         // console.log(tx.decodedCall.value.type);
         setTx(tx);
         setIsContract(tx.decodedCall.type === "Contracts");
+        setIsChainRegistrar(tx.decodedCall.type === "Registrar" && (tx.decodedCall.value.type === "reserve" || tx.decodedCall.value.type === "register"));
+        
 
         // Automatically trigger dry run if it's a contract call
         if (tx.decodedCall.type === "Contracts") {
@@ -98,7 +108,7 @@ export const SigningPortal: React.FC = () => {
         }
         // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
         if (tx.decodedCall.type === "Registrar" && (tx.decodedCall.value.type === "reserve" || tx.decodedCall.value.type === "register")) {
-          setIsChainRegistrar(true);
+          calculateCosts(tx, api);
         }
       } catch (err) {
         console.log(err);
@@ -130,6 +140,13 @@ export const SigningPortal: React.FC = () => {
       dryRun(tx, api);
     }
   }, [selectedAccount, isContract, tx, api]);
+
+  // Re-run calculate costs if selected account changes
+  useEffect(() => {
+    if (isChainRegistrar && tx && api) {
+      calculateCosts(tx, api);
+    }
+  }, [selectedAccount, isChainRegistrar, tx, api]);
 
   const handleTerminate = async () => {
     setError(null);
@@ -207,6 +224,38 @@ export const SigningPortal: React.FC = () => {
         break;
     }
     setDryRunResult(result);
+  };
+
+
+  const calculateCosts = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
+    let decodedCall = tx?.decodedCall;
+    if (!selectedAccount || (tx.decodedCall.type !== "Registrar" || (tx.decodedCall.value.type !== "reserve" && tx.decodedCall.value.type !== "register"))) {
+      return;
+    }
+    let fees = await tx.getEstimatedFees(selectedAccount.address);
+    setFeesEstimation(fees);
+
+
+    let paraDepositConstant = await api.constants.Registrar.ParaDeposit();
+    let dataDepositPerByteConstant = await api.constants.Registrar.DataDepositPerByte();
+    let deposit: bigint = 0n;
+
+    switch (decodedCall.value.type) {
+      case "reserve":
+        deposit = paraDepositConstant;
+        break;
+
+      case "register":
+        let args = decodedCall.value.value;
+        let genesisHead = args.genesis_head;
+        // @ts-ignore
+        let configuration = await api.query.Configuration.ActiveConfig.getValue();
+        let max_code_size = configuration.max_code_size;
+        deposit = paraDepositConstant + (dataDepositPerByteConstant * BigInt(genesisHead.asBytes().length)) + (dataDepositPerByteConstant * BigInt(max_code_size));
+        break;
+    }
+    setDeposit(deposit);
+    setIsChainRegistrar(true);
   };
 
   const sign = async () => {
@@ -343,10 +392,10 @@ export const SigningPortal: React.FC = () => {
               </div>
               {isChainRegistrar && (
                 <CostSummary 
-                  fees={1000} 
-                  deposit={10} 
+                  fees={feesEstimation} 
+                  deposit={deposit} 
                   accountBalance={100}
-                  // accountBalance={selectedAccount?.balance || 0} 
+                  chainProperties={chainProperties}
                 />
               )}
               </>
