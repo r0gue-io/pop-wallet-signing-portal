@@ -23,8 +23,6 @@ import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
 import { CostSummary } from "@/CostSummary"
-//TODO:
-import { testCallData } from "../../../test";
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -70,16 +68,7 @@ export const SigningPortal: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        // TODO:
-        // const result = await fetchPayload();
-        // const result = {
-        //   chain_rpc: "ws://127.0.0.1:59830",
-        //   call_data: Binary.fromHex("0x4605").asBytes(),
-        // }
-        const result = {
-          chain_rpc: "ws://127.0.0.1:59830",
-          call_data: testCallData,
-        }
+        const result = await fetchPayload();
         if (result.chain_rpc.endsWith("/")){
           setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
         } else {
