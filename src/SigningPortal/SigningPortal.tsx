@@ -86,19 +86,20 @@ export const SigningPortal: React.FC = () => {
         let callData = Binary.fromHex(hex);
         setCallData(callData);
         const tx = await api.txFromCallData(callData);
-        // console.log(tx.decodedCall.type);
-        // console.log(tx.decodedCall.value.type);
         setTx(tx);
-        setIsContract(tx.decodedCall.type === "Contracts");
-        setIsChainRegistrar(tx.decodedCall.type === "Registrar" && (tx.decodedCall.value.type === "reserve" || tx.decodedCall.value.type === "register"));
+
+        let pallet = tx.decodedCall.type;
+        let dispatachable = tx.decodedCall.value.type;
+        setIsContract(pallet === "Contracts");
+        setIsChainRegistrar(pallet === "Registrar" && (dispatachable === "reserve" || dispatachable === "register"));
         
 
         // Automatically trigger dry run if it's a contract call
-        if (tx.decodedCall.type === "Contracts") {
+        if (pallet === "Contracts") {
           dryRun(tx, api);
         }
         // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
-        if (tx.decodedCall.type === "Registrar" && (tx.decodedCall.value.type === "reserve" || tx.decodedCall.value.type === "register")) {
+        if (pallet === "Registrar" && (dispatachable === "reserve" || dispatachable === "register")) {
           calculateCosts(tx, api);
         }
       } catch (err) {
@@ -388,7 +389,7 @@ export const SigningPortal: React.FC = () => {
           <div className="pb-3">
             <div className="font-semibold pb-2">Extrinsic Info:</div>
             {tx ? (
-              <>
+              <React.Fragment>
               <div className="flex flex-wrap gap-x-4">
                 <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
                   <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.type}
@@ -397,15 +398,15 @@ export const SigningPortal: React.FC = () => {
                   <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
                 </div>
               </div>
-              {isChainRegistrar && (
-                <CostSummary 
-                  fees={feesEstimation} 
-                  deposit={deposit} 
-                  accountBalance={balanceSelectedAccount as bigint}
-                  chainProperties={chainProperties}
-                />
-              )}
-              </>
+                {isChainRegistrar && (
+                  <CostSummary 
+                    fees={feesEstimation} 
+                    deposit={deposit} 
+                    accountBalance={balanceSelectedAccount as bigint}
+                    chainProperties={chainProperties}
+                  />
+                )}
+              </React.Fragment>
             ) : (
               <p></p>
             )}
