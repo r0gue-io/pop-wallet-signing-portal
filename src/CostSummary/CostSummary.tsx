@@ -29,12 +29,12 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
         <div className="flex items-center space-x-2">
           {isInsufficientFunds ? (
             <div className="flex items-center space-x-2">
-              <span className="text-red-600 font-medium">Insufficient</span>
+              <span className="text-red-600 font-medium">fails</span>
               <ErrorIcon size={8} />
             </div>
           ) : (
             <div className="flex items-center space-x-2">
-              <span className="text-green-600 font-medium">Sufficient</span>
+              <span className="text-green-600 font-medium">succeeds</span>
               <SuccessIcon />
             </div>
           )}
