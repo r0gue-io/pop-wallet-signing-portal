@@ -306,7 +306,7 @@ export function DryRun({
 }
 
 //@ts-ignore
-const SuccessIcon = () => (
+export const SuccessIcon = () => (
   <span
     className="inline-flex justify-center items-center size-10 rounded-full border-4 border-teal-100 bg-teal-200 text-teal-800 dark:border-teal-900 dark:bg-teal-800 dark:text-teal-400">
               <svg
