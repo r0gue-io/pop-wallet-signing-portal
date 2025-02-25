@@ -60,7 +60,12 @@ export const SigningPortal: React.FC = () => {
     message: "",
   });
 
-  const { selectedAccount } = useAccounts()
+  const { selectedAccount } = useAccounts();
+
+  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain.
+  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
+    return tx?.decodedCall.type === "Registrar" && (tx?.decodedCall.value.type === "reserve" || tx?.decodedCall.value.type === "register");
+  };
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -89,17 +94,15 @@ export const SigningPortal: React.FC = () => {
         setTx(tx);
 
         let pallet = tx.decodedCall.type;
-        let dispatachable = tx.decodedCall.value.type;
         setIsContract(pallet === "Contracts");
-        setIsChainRegistrar(pallet === "Registrar" && (dispatachable === "reserve" || dispatachable === "register"));
+        setIsChainRegistrar(isRegistrarTransaction(tx));
         
-
         // Automatically trigger dry run if it's a contract call
         if (pallet === "Contracts") {
           dryRun(tx, api);
         }
         // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
-        if (pallet === "Registrar" && (dispatachable === "reserve" || dispatachable === "register")) {
+        if (isRegistrarTransaction(tx)) {
           calculateCosts(tx, api);
         }
       } catch (err) {
@@ -238,12 +241,11 @@ export const SigningPortal: React.FC = () => {
 
   const calculateCosts = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
     let decodedCall = tx?.decodedCall;
-    if (!selectedAccount || (tx.decodedCall.type !== "Registrar" || (tx.decodedCall.value.type !== "reserve" && tx.decodedCall.value.type !== "register"))) {
+    if (!selectedAccount || !isRegistrarTransaction(tx)) {
       return;
     }
     let fees = await tx.getEstimatedFees(selectedAccount.address);
     setFeesEstimation(fees);
-
 
     let paraDepositConstant = await api.constants.Registrar.ParaDeposit();
     let dataDepositPerByteConstant = await api.constants.Registrar.DataDepositPerByte();
