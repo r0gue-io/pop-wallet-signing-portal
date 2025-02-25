@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx";
+import { CostItem } from "./CostItem";
 
 interface CostSummaryProps {
   fees: bigint;
@@ -26,20 +27,9 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
       </div>
       {isOpen && (
         <div className="mt-3 space-y-2">
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-semibold">Fees:</span>
-            <span className="text-gray-900 font-light">{formatCurrency(fees, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-semibold">Storage Deposit:</span>
-            <span className="text-gray-900 font-light">{formatCurrency(deposit, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
-          </div>
-
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600 font-bold">Total Cost:</span>
-            <span className="text-gray-900 font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span>
-          </div>
+            <CostItem title="Fees" amount={fees} chainProperties={chainProperties} />
+            <CostItem title="Storage Deposit" amount={deposit} chainProperties={chainProperties} />
+            <CostItem title="Total Cost" amount={totalCost} chainProperties={chainProperties} isBold />
 
           <div className="space-y-2">
             <div className="flex justify-between items-center">

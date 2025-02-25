@@ -138,8 +138,9 @@ export const SigningPortal: React.FC = () => {
         setBalanceSelectedAccount(ev.data.free);
       });
     };
-
-    getSelectedAccountFreeBalance();
+    if (api) {
+      getSelectedAccountFreeBalance();
+    }
   }, [api, selectedAccount]);
 
   // Re-run dry run if selected account changes
