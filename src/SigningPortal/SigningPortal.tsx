@@ -44,7 +44,8 @@ export const SigningPortal: React.FC = () => {
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [signing, setSigning] = useState(false);
-  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null)
+  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
+  const [proxyAccount, setProxyAccount] = useState<bigint | null>(null);
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -62,10 +63,22 @@ export const SigningPortal: React.FC = () => {
 
   const { selectedAccount } = useAccounts();
 
-  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain.
-  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
-    return tx?.decodedCall.type === "Registrar" && (tx?.decodedCall.value.type === "reserve" || tx?.decodedCall.value.type === "register");
+  // Helper function to check if a transaction is a Registrar reserve/register call
+  const isRegistrarCall = (call: any): boolean => {
+    return call?.type === "Registrar" && ["reserve", "register"].includes(call?.value?.type);
   };
+
+  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain. Either directly, via a Proxy, or a Sudo call.
+  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
+    if (!tx?.decodedCall) return false;
+    const { type, value } = tx.decodedCall;
+    return (
+      isRegistrarCall(tx.decodedCall) || 
+      (type === "Proxy" && value?.type === "proxy" && isRegistrarCall(value?.value?.call)) ||
+      (type === "Sudo" && value?.type === "sudo" && isRegistrarCall(value?.value?.call))
+    );
+  };
+
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -238,12 +251,27 @@ export const SigningPortal: React.FC = () => {
     setDryRunResult(result);
   };
 
+  // Extracts the actual Registrar call from the transaction registar, proxy, or sudo.
+  const extractRegistrarCall = (tx: UnsafeTransaction<any, string, string, any>) => {
+    let decodedCall = tx?.decodedCall;
+
+    if (isRegistrarCall(tx.decodedCall)) return tx.decodedCall;
+    if (decodedCall.type === "Proxy" && decodedCall.value?.type === "proxy") {
+      setProxyAccount(decodedCall.value?.value?.real.value);
+      return decodedCall.value?.value?.call;
+    }
+    if (decodedCall.type === "Sudo" && decodedCall.value?.type === "sudo") return decodedCall.value?.value?.call;
+
+    return null;
+  };
 
   const calculateCosts = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
-    let decodedCall = tx?.decodedCall;
     if (!selectedAccount || !isRegistrarTransaction(tx)) {
       return;
     }
+    const registrarCall = extractRegistrarCall(tx);
+    if (!registrarCall) return;
+
     let fees = await tx.getEstimatedFees(selectedAccount.address);
     setFeesEstimation(fees);
 
@@ -251,13 +279,13 @@ export const SigningPortal: React.FC = () => {
     let dataDepositPerByteConstant = await api.constants.Registrar.DataDepositPerByte();
     let deposit: bigint = 0n;
 
-    switch (decodedCall.value.type) {
+    switch (registrarCall.value.type) {
       case "reserve":
         deposit = paraDepositConstant;
         break;
 
       case "register":
-        let args = decodedCall.value.value;
+        let args = registrarCall.value.value;
         let genesisHead = args.genesis_head;
         // @ts-ignore
         let configuration = await api.query.Configuration.ActiveConfig.getValue();
