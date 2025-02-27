@@ -22,6 +22,7 @@ import { Modal } from "@/Modal"
 import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
+import { CostSummary } from "@/CostSummary"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -35,11 +36,15 @@ export const SigningPortal: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isContract, setIsContract] = useState<boolean>(false);
+  const [isChainRegistrar, setIsChainRegistrar] = useState<boolean>(false);
+  const [feesEstimation, setFeesEstimation] = useState<bigint>(0n);
+  const [deposit, setDeposit] = useState<bigint>(0n);
   const [dryRunResult, setDryRunResult] = useState<any | null>(null);
   const [useGasEstimates, setUseGasEstimates] = useState<boolean>(true);
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [signing, setSigning] = useState(false);
+  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null)
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -55,7 +60,12 @@ export const SigningPortal: React.FC = () => {
     message: "",
   });
 
-  const { selectedAccount } = useAccounts()
+  const { selectedAccount } = useAccounts();
+
+  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain.
+  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
+    return tx?.decodedCall.type === "Registrar" && (tx?.decodedCall.value.type === "reserve" || tx?.decodedCall.value.type === "register");
+  };
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -82,11 +92,18 @@ export const SigningPortal: React.FC = () => {
         setCallData(callData);
         const tx = await api.txFromCallData(callData);
         setTx(tx);
-        setIsContract(tx.decodedCall.type === "Contracts");
 
+        let pallet = tx.decodedCall.type;
+        setIsContract(pallet === "Contracts");
+        setIsChainRegistrar(isRegistrarTransaction(tx));
+        
         // Automatically trigger dry run if it's a contract call
-        if (tx.decodedCall.type === "Contracts") {
+        if (pallet === "Contracts") {
           dryRun(tx, api);
+        }
+        // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
+        if (isRegistrarTransaction(tx)) {
+          calculateCosts(tx, api);
         }
       } catch (err) {
         console.log(err);
@@ -103,14 +120,31 @@ export const SigningPortal: React.FC = () => {
     const loadChainProperties = async () => {
       if (client) {
         let chainSpec = await client.getChainSpecData();
-        if (chainSpec.properties.ss58Format && chainSpec.properties.tokenDecimals && chainSpec.properties.tokenSymbol) {
-          setChainProperties(chainSpec.properties)
-        }
+        // Extract properties & provide default values for missing ones
+        let updatedProperties: ChainProperties = {
+          ss58Format: chainSpec.properties.ss58Format ?? 42,
+          tokenDecimals: chainSpec.properties.tokenDecimals ?? 12,
+          tokenSymbol: chainSpec.properties.tokenSymbol ?? "UNIT",
+        };
+
+        setChainProperties(updatedProperties);
       }
     }
 
     loadChainProperties();
   }, [client]);
+
+  useEffect(() => {
+    const getSelectedAccountFreeBalance = async () => {
+      // @ts-ignore
+      api.query.System.Account.watchValue(selectedAccount?.address).subscribe((ev) => {
+        setBalanceSelectedAccount(ev.data.free);
+      });
+    };
+    if (api) {
+      getSelectedAccountFreeBalance();
+    }
+  }, [api, selectedAccount]);
 
   // Re-run dry run if selected account changes
   useEffect(() => {
@@ -118,6 +152,13 @@ export const SigningPortal: React.FC = () => {
       dryRun(tx, api);
     }
   }, [selectedAccount, isContract, tx, api]);
+
+  // Re-run calculate costs if selected account changes
+  useEffect(() => {
+    if (isChainRegistrar && tx && api) {
+      calculateCosts(tx, api);
+    }
+  }, [selectedAccount, isChainRegistrar, tx, api]);
 
   const handleTerminate = async () => {
     setError(null);
@@ -195,6 +236,37 @@ export const SigningPortal: React.FC = () => {
         break;
     }
     setDryRunResult(result);
+  };
+
+
+  const calculateCosts = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
+    let decodedCall = tx?.decodedCall;
+    if (!selectedAccount || !isRegistrarTransaction(tx)) {
+      return;
+    }
+    let fees = await tx.getEstimatedFees(selectedAccount.address);
+    setFeesEstimation(fees);
+
+    let paraDepositConstant = await api.constants.Registrar.ParaDeposit();
+    let dataDepositPerByteConstant = await api.constants.Registrar.DataDepositPerByte();
+    let deposit: bigint = 0n;
+
+    switch (decodedCall.value.type) {
+      case "reserve":
+        deposit = paraDepositConstant;
+        break;
+
+      case "register":
+        let args = decodedCall.value.value;
+        let genesisHead = args.genesis_head;
+        // @ts-ignore
+        let configuration = await api.query.Configuration.ActiveConfig.getValue();
+        let max_code_size = configuration.max_code_size;
+        deposit = paraDepositConstant + (dataDepositPerByteConstant * BigInt(genesisHead.asBytes().length)) + (dataDepositPerByteConstant * BigInt(max_code_size));
+        break;
+    }
+    setDeposit(deposit);
+    setIsChainRegistrar(true);
   };
 
   const sign = async () => {
@@ -320,6 +392,7 @@ export const SigningPortal: React.FC = () => {
           <div className="pb-3">
             <div className="font-semibold pb-2">Extrinsic Info:</div>
             {tx ? (
+              <React.Fragment>
               <div className="flex flex-wrap gap-x-4">
                 <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
                   <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.type}
@@ -328,6 +401,15 @@ export const SigningPortal: React.FC = () => {
                   <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
                 </div>
               </div>
+                {isChainRegistrar && (
+                  <CostSummary 
+                    fees={feesEstimation} 
+                    deposit={deposit} 
+                    accountBalance={balanceSelectedAccount as bigint}
+                    chainProperties={chainProperties}
+                  />
+                )}
+              </React.Fragment>
             ) : (
               <p></p>
             )}

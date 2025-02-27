@@ -11,7 +11,13 @@ export interface ChainProperties {
   tokenSymbol: string;
 }
 
-export const decimalSeparatorDisplay = "."
+// Auxiliar function to detect decimal separator based on locale
+const getDecimalSeparatorFromLocale = (): string => {
+  const formattedNumber = (1.1).toLocaleString(); 
+  return formattedNumber.includes(",") ? "," : "."; 
+};
+
+export const decimalSeparatorDisplay = getDecimalSeparatorFromLocale();
 export const decimalSeparatorsInput = [".", ","]
 export const decimalSeparatorRegex = ",|."
 
@@ -55,7 +61,8 @@ export const formatCurrency = (
   }
   const isNegative = value < 0n
   const absValue = isNegative ? value * -1n : value
-  let intPartStr = (absValue / precisionMultiplier).toString()
+  let intPartStr = (absValue / precisionMultiplier).toLocaleString();
+
   if (isNegative) intPartStr = "-" + intPartStr
   const decimalPart = absValue % precisionMultiplier
 
