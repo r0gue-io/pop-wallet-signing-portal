@@ -36,7 +36,7 @@ export type FormatCurrencyOptions = {
 }
 
 const defaultOptions: FormatCurrencyOptions = {
-  nDecimals: Infinity,
+  nDecimals: 2,
   padToDecimals: true,
   decimalSeparator: decimalSeparatorDisplay,
 }
