@@ -45,7 +45,7 @@ export const SigningPortal: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [signing, setSigning] = useState(false);
   const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
-  const [proxyAccountBalance, setProxyAccountBalance] = useState<bigint | null>(null);
+  const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -264,7 +264,7 @@ export const SigningPortal: React.FC = () => {
     if (decodedCall.type === "Proxy" && decodedCall.value?.type === "proxy") {
       // @ts-ignore
       api.query.System.Account.watchValue(decodedCall.value?.value?.real.value).subscribe((ev) => {
-        setProxyAccountBalance(ev.data.free);
+        setProxiedAccountBalance(ev.data.free);
       });
       return decodedCall.value?.value?.call;
     }
@@ -456,7 +456,7 @@ export const SigningPortal: React.FC = () => {
                     deposit={deposit} 
                     accountBalance={balanceSelectedAccount as bigint}
                     chainProperties={chainProperties}
-                    proxyAccountBalance={proxyAccountBalance ?? undefined}
+                    proxiedAccountBalance={proxiedAccountBalance ?? undefined}
                   />
                 )}
               </React.Fragment>

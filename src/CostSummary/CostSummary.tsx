@@ -8,18 +8,18 @@ interface CostSummaryProps {
   fees: bigint;
   deposit: bigint;
   accountBalance: bigint;
-  proxyAccountBalance?: bigint;
+  proxiedAccountBalance?: bigint;
   chainProperties: ChainProperties;  
 }
 
-export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, accountBalance, proxyAccountBalance, chainProperties }) => {
+export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, accountBalance, proxiedAccountBalance, chainProperties }) => {
   const [isOpen, setIsOpen] = useState(true);
 
   const totalCost = fees + deposit;
-  const isProxyUsed = proxyAccountBalance !== undefined;
+  const isProxyUsed = proxiedAccountBalance !== undefined;
 
   const hasInsufficientFunds = !isProxyUsed && accountBalance < totalCost;
-  const hasProxyInsufficientFunds = isProxyUsed && proxyAccountBalance < totalCost;
+  const hasProxyInsufficientFunds = isProxyUsed && proxiedAccountBalance < totalCost;
 
   return (
     <div className="mt-6 bg-gray-100 border border-gray-300 rounded-lg p-4">
@@ -54,12 +54,12 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
 
           {isProxyUsed && (
             <React.Fragment>
-              <CostItem title="Proxy Balance" amount={proxyAccountBalance!} chainProperties={chainProperties} />
+              <CostItem title="Proxy Balance" amount={proxiedAccountBalance!} chainProperties={chainProperties} />
               {hasProxyInsufficientFunds ? (
                 <div className="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded mt-3">
-                  <p className="font-semibold">Insufficient Proxy Balance</p>
-                  <p>The proxy doesn't have enough balance.</p>
-                  <p>You need at least <span className="font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> in the proxy account.</p>
+                  <p className="font-semibold">Insufficient Funds</p>
+                  <p>The proxied account doesn't have enough balance.</p>
+                  <p>You need at least <span className="font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> in the proxied account.</p>
                 </div>
               ) : null}
             </React.Fragment>
