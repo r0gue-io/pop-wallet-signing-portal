@@ -58,7 +58,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
               {hasProxyInsufficientFunds ? (
                 <div className="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded mt-3">
                   <p className="font-semibold">Insufficient Proxy Balance</p>
-                  <p>The proxy account does not have enough balance.</p>
+                  <p>The proxy doesn't have enough balance.</p>
                   <p>You need at least <span className="font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> in the proxy account.</p>
                 </div>
               ) : null}

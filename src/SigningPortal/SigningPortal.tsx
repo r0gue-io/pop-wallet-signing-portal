@@ -68,14 +68,19 @@ export const SigningPortal: React.FC = () => {
     return call?.type === "Registrar" && ["reserve", "register"].includes(call?.value?.type);
   };
 
+  // Helper function to check if a wrapped call (Proxy or Sudo) is a Registrar call
+  const isWrappedRegistrarCall = (type: string, value: any): boolean => {
+    return (
+      (type === "Proxy" && value?.type === "proxy" && isRegistrarCall(value?.value?.call)) ||
+      (type === "Sudo" && value?.type === "sudo" && isRegistrarCall(value?.value?.call))
+    );
+  };
+
   // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain. Either directly, via a Proxy, or a Sudo call.
   const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
     if (!tx?.decodedCall) return false;
-    const { type, value } = tx.decodedCall;
     return (
-      isRegistrarCall(tx.decodedCall) || 
-      (type === "Proxy" && value?.type === "proxy" && isRegistrarCall(value?.value?.call)) ||
-      (type === "Sudo" && value?.type === "sudo" && isRegistrarCall(value?.value?.call))
+      isRegistrarCall(tx.decodedCall) || isWrappedRegistrarCall(tx.decodedCall.type, tx.decodedCall.value)
     );
   };
 
@@ -432,6 +437,19 @@ export const SigningPortal: React.FC = () => {
                   <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
                 </div>
               </div>
+              { isWrappedRegistrarCall(tx.decodedCall.type, tx.decodedCall.value) && (
+                 <div className="mt-2 pl-4 border-l-2 border-gray-300">
+                  <div className="text-gray-700 font-medium pb-1">Underlying Call:</div>
+                    <div className="flex flex-wrap gap-x-4">
+                    <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                      <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.value?.value?.call.type}
+                    </div>
+                    <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                      <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value?.value?.call.value.type}
+                    </div>
+                  </div>
+                </div>
+                )}
                 {isChainRegistrar && (
                   <CostSummary 
                     fees={feesEstimation} 
