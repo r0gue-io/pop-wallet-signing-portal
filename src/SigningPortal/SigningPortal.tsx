@@ -261,18 +261,19 @@ export const SigningPortal: React.FC = () => {
   // Extracts the actual Registrar call from the transaction registar, proxy, or sudo.
   const extractRegistrarCall = (tx: UnsafeTransaction<any, string, string, any>) => {
     let decodedCall = tx?.decodedCall;
+    let decodedCallValue = decodedCall.value?.value;
 
-    if (isRegistrarCall(tx.decodedCall)) return tx.decodedCall;
+    if (isRegistrarCall(decodedCall)) return decodedCall;
     if (decodedCall.type === "Proxy" && decodedCall.value?.type === "proxy") {
-      let account = decodedCall.value?.value?.real.value;
+      let account = decodedCallValue.real.value;
       setProxiedAccount(account);
       // @ts-ignore
       api.query.System.Account.watchValue(account).subscribe((ev) => {
         setProxiedAccountBalance(ev.data.free);
       });
-      return decodedCall.value?.value?.call;
+      return decodedCallValue.call;
     }
-    if (decodedCall.type === "Sudo" && decodedCall.value?.type === "sudo") return decodedCall.value?.value?.call;
+    if (decodedCall.type === "Sudo" && decodedCall.value?.type === "sudo") return decodedCallValue.call;
 
     return null;
   };
