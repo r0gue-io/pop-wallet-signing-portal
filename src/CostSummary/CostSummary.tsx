@@ -19,7 +19,8 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
   const isProxyUsed = proxiedAccountBalance !== undefined;
 
   const hasInsufficientFunds = !isProxyUsed && accountBalance < totalCost;
-  const hasProxyInsufficientFunds = isProxyUsed && proxiedAccountBalance < totalCost;
+  const hasProxyInsufficientFunds = isProxyUsed && proxiedAccountBalance < deposit;
+  const hasSignerInsufficientFunds = isProxyUsed && accountBalance < fees;
 
   return (
     <div className="mt-6 bg-gray-100 border border-gray-300 rounded-lg p-4">
@@ -31,7 +32,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
           <h3 className="text-lg font-semibold">Cost Summary</h3>
         </div>
         <div className="flex items-center space-x-2">
-          {hasInsufficientFunds || hasProxyInsufficientFunds ? (
+          {hasInsufficientFunds || (hasProxyInsufficientFunds ||  hasSignerInsufficientFunds) ? (
             <div className="flex items-center space-x-2">
               <span className="text-red-600 font-medium">fails</span>
               <ErrorIcon size={8} />
@@ -59,7 +60,13 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
                 <div className="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded mt-3">
                   <p className="font-semibold">Insufficient Funds</p>
                   <p>The proxied account doesn't have enough balance.</p>
-                  <p>You need at least <span className="font-bold">{formatCurrency(totalCost, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> in the proxied account.</p>
+                  <p>You need at least <span className="font-bold">{formatCurrency(deposit, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> in the proxied account.</p>
+                </div>
+              ) : null}
+               {hasSignerInsufficientFunds ? (
+                <div className="p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded mt-3">
+                  <p className="font-semibold">Insufficient Funds</p>
+                  <p>You need at least <span className="font-bold">{formatCurrency(fees, chainProperties.tokenDecimals)} {chainProperties.tokenSymbol}</span> to complete this transaction.</p>
                 </div>
               ) : null}
             </React.Fragment>
@@ -77,7 +84,7 @@ export const CostSummary: React.FC<CostSummaryProps> = ({ fees, deposit, account
           ) : null}
 
           {/* Show success message ONLY if neither the main nor the proxy account is insufficient */}
-          {!hasInsufficientFunds && !hasProxyInsufficientFunds ? (
+          {!hasInsufficientFunds && (!hasProxyInsufficientFunds && !hasSignerInsufficientFunds) ? (
             <div className="text-green-600 font-bold flex items-center mt-3">
               The call will be successful.
             </div>
