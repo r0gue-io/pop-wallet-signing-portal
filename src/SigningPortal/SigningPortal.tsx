@@ -44,7 +44,10 @@ export const SigningPortal: React.FC = () => {
   const [chainProperties, setChainProperties] = useState<ChainProperties>({ss58Format: 42, tokenDecimals: 12, tokenSymbol: "UNIT"});
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [signing, setSigning] = useState(false);
-  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null)
+  const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
+  const [proxiedAccount, setProxiedAccount] = useState<string | null>(null);
+  const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
+
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -62,10 +65,27 @@ export const SigningPortal: React.FC = () => {
 
   const { selectedAccount } = useAccounts();
 
-  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain.
-  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
-    return tx?.decodedCall.type === "Registrar" && (tx?.decodedCall.value.type === "reserve" || tx?.decodedCall.value.type === "register");
+  // Helper function to check if a transaction is a Registrar reserve/register call
+  const isRegistrarCall = (call: any): boolean => {
+    return call?.type === "Registrar" && ["reserve", "register"].includes(call?.value?.type);
   };
+
+  // Helper function to check if a wrapped call (Proxy or Sudo) is a Registrar call
+  const isWrappedRegistrarCall = (type: string, value: any): boolean => {
+    return (
+      (type === "Proxy" && value?.type === "proxy" && isRegistrarCall(value?.value?.call)) ||
+      (type === "Sudo" && value?.type === "sudo" && isRegistrarCall(value?.value?.call))
+    );
+  };
+
+  // Check if the transaction is related to the Registrar pallet: reserve a parachain id or register a parachain. Either directly, via a Proxy, or a Sudo call.
+  const isRegistrarTransaction = (tx: UnsafeTransaction<any, string, string, any>) => {
+    if (!tx?.decodedCall) return false;
+    return (
+      isRegistrarCall(tx.decodedCall) || isWrappedRegistrarCall(tx.decodedCall.type, tx.decodedCall.value)
+    );
+  };
+
 
   // Fetch the payload on component mount
   useEffect(() => {
@@ -238,12 +258,33 @@ export const SigningPortal: React.FC = () => {
     setDryRunResult(result);
   };
 
+  // Extracts the actual Registrar call from the transaction registar, proxy, or sudo.
+  const extractRegistrarCall = (tx: UnsafeTransaction<any, string, string, any>) => {
+    let decodedCall = tx?.decodedCall;
+    let decodedCallValue = decodedCall.value?.value;
+
+    if (isRegistrarCall(decodedCall)) return decodedCall;
+    if (decodedCall.type === "Proxy" && decodedCall.value?.type === "proxy") {
+      let account = decodedCallValue.real.value;
+      setProxiedAccount(account);
+      // @ts-ignore
+      api.query.System.Account.watchValue(account).subscribe((ev) => {
+        setProxiedAccountBalance(ev.data.free);
+      });
+      return decodedCallValue.call;
+    }
+    if (decodedCall.type === "Sudo" && decodedCall.value?.type === "sudo") return decodedCallValue.call;
+
+    return null;
+  };
 
   const calculateCosts = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
-    let decodedCall = tx?.decodedCall;
     if (!selectedAccount || !isRegistrarTransaction(tx)) {
       return;
     }
+    const registrarCall = extractRegistrarCall(tx);
+    if (!registrarCall) return;
+
     let fees = await tx.getEstimatedFees(selectedAccount.address);
     setFeesEstimation(fees);
 
@@ -251,13 +292,13 @@ export const SigningPortal: React.FC = () => {
     let dataDepositPerByteConstant = await api.constants.Registrar.DataDepositPerByte();
     let deposit: bigint = 0n;
 
-    switch (decodedCall.value.type) {
+    switch (registrarCall.value.type) {
       case "reserve":
         deposit = paraDepositConstant;
         break;
 
       case "register":
-        let args = decodedCall.value.value;
+        let args = registrarCall.value.value;
         let genesisHead = args.genesis_head;
         // @ts-ignore
         let configuration = await api.query.Configuration.ActiveConfig.getValue();
@@ -401,12 +442,34 @@ export const SigningPortal: React.FC = () => {
                   <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value.type}
                 </div>
               </div>
+              {proxiedAccount && (
+                <div className="mt-2">
+                  <div className="text-gray-700 font-medium pb-1">Executing on behalf of:</div>
+                  <div className="bg-gray-50 rounded p-2 border border-gray-200 font-medium">
+                    <span className="text-gray-600 font-normal">Proxied Account:</span> {proxiedAccount}
+                  </div>
+                </div>
+              )}
+              { isWrappedRegistrarCall(tx.decodedCall.type, tx.decodedCall.value) && (
+                 <div className="mt-2 pl-4 border-l-2 border-gray-300">
+                  <div className="text-gray-700 font-medium pb-1">Underlying Call:</div>
+                    <div className="flex flex-wrap gap-x-4">
+                    <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                      <span className="text-gray-600 font-light">Pallet:</span> {tx.decodedCall.value?.value?.call.type}
+                    </div>
+                    <div className="bg-gray-100 rounded p-1 border border-gray-200 font-bold">
+                      <span className="text-gray-600 font-light">Dispatchable:</span> {tx.decodedCall.value?.value?.call.value.type}
+                    </div>
+                  </div>
+                </div>
+                )}
                 {isChainRegistrar && (
                   <CostSummary 
                     fees={feesEstimation} 
                     deposit={deposit} 
                     accountBalance={balanceSelectedAccount as bigint}
                     chainProperties={chainProperties}
+                    proxiedAccountBalance={proxiedAccountBalance ?? undefined}
                   />
                 )}
               </React.Fragment>
