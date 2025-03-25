@@ -8,6 +8,7 @@ import {
   createClient,
   Enum,
   HexString,
+  InvalidTxError,
   PolkadotClient,
   PolkadotSigner,
   UnsafeApi,
@@ -93,7 +94,12 @@ export const SigningPortal: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await fetchPayload();
+        //const result = await fetchPayload();
+        // TODO: For testing purposes.
+        const result = {
+          chain_rpc: "ws://127.0.0.1:9944",
+          call_data: Binary.fromHex("0x08015801b439a678d9d3a68b8019da6a4abfa507de110000000010633aa551").asBytes(),
+        }
         if (result.chain_rpc.endsWith("/")){
           setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
         } else {
@@ -389,6 +395,47 @@ export const SigningPortal: React.FC = () => {
     setSigning(false);
   };
 
+  const handleRequestMapAccount = async () => {
+      if (!selectedAccount || !api) {
+        return;
+      }
+      // @ts-ignore
+      const tx: UnsafeTransaction<any, string, string, any>  = await api.tx["Revive"]["map_account"]({});
+      //TODO: For testing purposes. works
+      //let signedPayload = await tx.sign(selectedAccount.polkadotSigner as PolkadotSigner);
+      //console.log("Signed payload:", signedPayload);
+      try{
+        //TODO: For testing purposes. works
+        let estimatedFees = await tx.getEstimatedFees(selectedAccount.address);
+        console.log("Estimated fees:", estimatedFees);
+        
+        // Submit and watch the transaction
+        tx.signSubmitAndWatch(selectedAccount.polkadotSigner as PolkadotSigner).subscribe({
+          next: (status) => {
+            console.log("Tx status:", status);
+
+            // @ts-ignore
+            if (status.isInBlock || status.isFinalized) {
+              console.log("Tx included in block or finalized.");
+              dryRun(tx, api);
+            }
+          },
+          error: (err) => {
+            if (err instanceof InvalidTxError) {
+              console.error("Invalid transaction:", err.error);
+            } else {
+              console.error("Transaction error:", err);
+            }
+          },
+          complete: () => {
+            console.log("Transaction watch complete.");
+          },
+        });
+      } catch (err) {
+        console.error("Error during map_account request:", err);
+      }
+  };
+
   // Render the UI
   return (
     <> {selectedAccount &&
@@ -492,6 +539,7 @@ export const SigningPortal: React.FC = () => {
               originalGas={tx?.decodedCall.value.value.gas_limit}
               callType={tx?.decodedCall.value.type}
               chainProperties={chainProperties}
+              onRequestMapAccount={handleRequestMapAccount}
             ></DryRun>
           </div>
         )}
