@@ -8,7 +8,6 @@ import {
   createClient,
   Enum,
   HexString,
-  InvalidTxError,
   PolkadotClient,
   PolkadotSigner,
   UnsafeApi,
