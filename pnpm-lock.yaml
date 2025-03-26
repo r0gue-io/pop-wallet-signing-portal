@@ -48,7 +48,7 @@ importers:
         specifier: ^0.456.0
         version: 0.456.0(react@18.3.1)
       polkadot-api:
-        specifier: ^1.9.7
+        specifier: ^1.7.3
         version: 1.9.7(jiti@1.21.6)(postcss@8.4.49)(rxjs@7.8.1)(yaml@2.6.0)
       react:
         specifier: ^18.3.1
@@ -1454,9 +1454,6 @@ packages:
     peerDependencies:
       rxjs: '>=7'
 
-  '@scure/base@1.1.9':
-    resolution: {integrity: sha512-8YKhl8GHiNI/pU2VMaofa2Tor7PJRAjwQLBBuilkJ9L5+13yVbC7JO/wS7piioAvPSwR3JKM1IJ/u4xQzbcXKg==}
-
   '@scure/base@1.2.4':
     resolution: {integrity: sha512-5Yy9czTO47mqz+/J8GM6GIId4umdCk1wc1q8rKERQulIoc8VP9pzDcghv10Tl2E7R96ZUx/PhND3ESYUQX8NuQ==}
 
@@ -2770,18 +2767,6 @@ packages:
     resolution: {integrity: sha512-DqUx8GI3r9BFWwU2DPKddL1E7xWfbFED82mLVhGXKlFEPe8IkBftzO7WfNwHtk7oGDHDeuH/o8VMpzzfMwmLUA==}
     engines: {node: '>=18'}
 
-  ws@8.18.0:
-    resolution: {integrity: sha512-8VbfWfHLbbwu3+N6OKsOMpBdT4kXPDDB9cJk2bJ6mh9ucxdlnNvH1e+roYkKmN9Nxw2yjz7VzeO9oOz2zJ04Pw==}
-    engines: {node: '>=10.0.0'}
-    peerDependencies:
-      bufferutil: ^4.0.1
-      utf-8-validate: '>=5.0.2'
-    peerDependenciesMeta:
-      bufferutil:
-        optional: true
-      utf-8-validate:
-        optional: true
-
   ws@8.18.1:
     resolution: {integrity: sha512-RKW2aJZMXeMxVpnZ6bck+RswznaxmzdULiBr6KY7XkTnW8uvt0iT9H5DkHUChXrc+uurzwa0rVI16n/Xzjdz1w==}
     engines: {node: '>=10.0.0'}
@@ -3315,7 +3300,7 @@ snapshots:
 
   '@polkadot-api/smoldot@0.3.8':
     dependencies:
-      '@types/node': 22.9.0
+      '@types/node': 22.13.13
       smoldot: 2.0.34
     transitivePeerDependencies:
       - bufferutil
@@ -3381,14 +3366,14 @@ snapshots:
   '@polkadot/util-crypto@12.6.2(@polkadot/util@12.6.2)':
     dependencies:
       '@noble/curves': 1.7.0
-      '@noble/hashes': 1.6.0
+      '@noble/hashes': 1.7.1
       '@polkadot/networks': 12.6.2
       '@polkadot/util': 12.6.2
       '@polkadot/wasm-crypto': 7.4.1(@polkadot/util@12.6.2)(@polkadot/x-randomvalues@12.6.2(@polkadot/util@12.6.2)(@polkadot/wasm-util@7.4.1(@polkadot/util@12.6.2)))
       '@polkadot/wasm-util': 7.4.1(@polkadot/util@12.6.2)
       '@polkadot/x-bigint': 12.6.2
       '@polkadot/x-randomvalues': 12.6.2(@polkadot/util@12.6.2)(@polkadot/wasm-util@7.4.1(@polkadot/util@12.6.2))
-      '@scure/base': 1.1.9
+      '@scure/base': 1.2.4
       tslib: 2.8.1
 
   '@polkadot/util@12.6.2':
@@ -4063,8 +4048,6 @@ snapshots:
     dependencies:
       rxjs: 7.8.1
 
-  '@scure/base@1.1.9': {}
-
   '@scure/base@1.2.4': {}
 
   '@sec-ant/readable-stream@0.4.1': {}
@@ -4102,7 +4085,7 @@ snapshots:
 
   '@types/bn.js@5.1.6':
     dependencies:
-      '@types/node': 22.9.0
+      '@types/node': 22.13.13
 
   '@types/estree@1.0.6': {}
 
@@ -5052,7 +5035,7 @@ snapshots:
 
   smoldot@2.0.34:
     dependencies:
-      ws: 8.18.0
+      ws: 8.18.1
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -5362,8 +5345,6 @@ snapshots:
       sort-keys: 5.1.0
       type-fest: 4.26.1
       write-json-file: 6.0.0
-
-  ws@8.18.0: {}
 
   ws@8.18.1: {}
 
