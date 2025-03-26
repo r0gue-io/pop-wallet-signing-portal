@@ -48,7 +48,7 @@ export const SigningPortal: React.FC = () => {
   const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
   const [proxiedAccount, setProxiedAccount] = useState<string | null>(null);
   const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
-
+  const [accountMapped, setAccountMapped] = useState<boolean>(false);
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -177,7 +177,7 @@ export const SigningPortal: React.FC = () => {
     if (isContract && tx && api) {
       dryRun(tx, api);
     }
-  }, [selectedAccount, isContract, tx, api]);
+  }, [selectedAccount, isContract, tx, api, accountMapped]);
 
   // Re-run calculate costs if selected account changes
   useEffect(() => {
@@ -401,39 +401,19 @@ export const SigningPortal: React.FC = () => {
       }
       // @ts-ignore
       const tx: UnsafeTransaction<any, string, string, any>  = await api.tx["Revive"]["map_account"]({});
-      //TODO: For testing purposes. works
-      //let signedPayload = await tx.sign(selectedAccount.polkadotSigner as PolkadotSigner);
-      //console.log("Signed payload:", signedPayload);
-      try{
-        //TODO: For testing purposes. works
-        let estimatedFees = await tx.getEstimatedFees(selectedAccount.address);
-        console.log("Estimated fees:", estimatedFees);
-        
         // Submit and watch the transaction
-        tx.signSubmitAndWatch(selectedAccount.polkadotSigner as PolkadotSigner).subscribe({
-          next: (status) => {
-            console.log("Tx status:", status);
-
-            // @ts-ignore
-            if (status.isInBlock || status.isFinalized) {
-              console.log("Tx included in block or finalized.");
-              dryRun(tx, api);
-            }
+        // @ts-ignore
+        tx.signSubmitAndWatch(selectedAccount?.polkadotSigner as PolkadotSigner).subscribe({
+          next: (_) => {
+            setAccountMapped(true);
           },
-          error: (err) => {
-            if (err instanceof InvalidTxError) {
-              console.error("Invalid transaction:", err.error);
-            } else {
-              console.error("Transaction error:", err);
-            }
-          },
-          complete: () => {
-            console.log("Transaction watch complete.");
+          error: (_) => {
+            setError(
+              `Failed to map account automatically. Please try manually using:\n\n` +
+              `pop call chain --pallet Revive --function map_account --url ${rpc} --use-wallet`
+            );
           },
         });
-      } catch (err) {
-        console.error("Error during map_account request:", err);
-      }
   };
 
   // Render the UI
