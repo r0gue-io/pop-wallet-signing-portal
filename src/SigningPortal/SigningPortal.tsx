@@ -93,12 +93,7 @@ export const SigningPortal: React.FC = () => {
       setLoading(true);
       setError(null);
       try {
-        //const result = await fetchPayload();
-        // TODO: For testing purposes.
-        const result = {
-          chain_rpc: "ws://127.0.0.1:9944",
-          call_data: Binary.fromHex("0x08015801b439a678d9d3a68b8019da6a4abfa507de110000000010633aa551").asBytes(),
-        }
+        const result = await fetchPayload();
         if (result.chain_rpc.endsWith("/")){
           setRpc(result.chain_rpc.substring(0, result.chain_rpc.length - 1));
         } else {
