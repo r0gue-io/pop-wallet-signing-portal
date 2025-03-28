@@ -47,7 +47,6 @@ export const SigningPortal: React.FC = () => {
   const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
   const [proxiedAccount, setProxiedAccount] = useState<string | null>(null);
   const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
-  const [accountMapped, setAccountMapped] = useState<boolean>(false);
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -171,7 +170,7 @@ export const SigningPortal: React.FC = () => {
     if (isContract && tx && api) {
       dryRun(tx, api);
     }
-  }, [selectedAccount, isContract, tx, api, accountMapped]);
+  }, [selectedAccount, isContract, tx, api]);
 
   // Re-run calculate costs if selected account changes
   useEffect(() => {
@@ -389,27 +388,6 @@ export const SigningPortal: React.FC = () => {
     setSigning(false);
   };
 
-  const handleRequestMapAccount = async () => {
-      if (!selectedAccount || !api) {
-        return;
-      }
-      // @ts-ignore
-      const tx: UnsafeTransaction<any, string, string, any>  = await api.tx["Revive"]["map_account"]({});
-        // Submit and watch the transaction
-        // @ts-ignore
-        tx.signSubmitAndWatch(selectedAccount?.polkadotSigner as PolkadotSigner).subscribe({
-          next: (_) => {
-            setAccountMapped(true);
-          },
-          error: (_) => {
-            setError(
-              `Failed to map account automatically. Please try manually using:\n\n` +
-              `pop call chain --pallet Revive --function map_account --url ${rpc} --use-wallet`
-            );
-          },
-        });
-  };
-
   // Render the UI
   return (
     <> {selectedAccount &&
@@ -504,7 +482,7 @@ export const SigningPortal: React.FC = () => {
 
         </div>
 
-        {isContract && dryRunResult && (
+        {isContract && dryRunResult && rpc && (
           <div>
             <DryRun
               dryRunResult={dryRunResult}
@@ -513,7 +491,7 @@ export const SigningPortal: React.FC = () => {
               originalGas={tx?.decodedCall.value.value.gas_limit}
               callType={tx?.decodedCall.value.type}
               chainProperties={chainProperties}
-              onRequestMapAccount={handleRequestMapAccount}
+              rpc={rpc}
             ></DryRun>
           </div>
         )}

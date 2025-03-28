@@ -5,7 +5,6 @@ import { Binary } from "polkadot-api";
 import React from "react"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx"
 import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
-import { Button } from "@/components/ui/button";
 
 export interface CodeUploadResult {
   type?: string;
@@ -52,11 +51,11 @@ interface DryRunProps {
   setUseGasEstimates: (value: boolean) => void;
   originalGas: {ref_time: bigint, proof_size: number}
   chainProperties: ChainProperties;
-  onRequestMapAccount?: () => void;
+  rpc: string;
 }
 
 // CodeUpload Component
-const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void , chainProperties: ChainProperties, onRequestMapAccount?: () => void}> = ({ result , setSuccess, chainProperties, onRequestMapAccount}) => {
+const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void , chainProperties: ChainProperties, rpc: string}> = ({ result , setSuccess, chainProperties, rpc}) => {
   const isSuccess = (result: CodeUploadResult): boolean => {
     return result.success as boolean;
   };
@@ -87,21 +86,18 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
         </div>
       ) : (
         <div>
-          <div className="text-sm bg-gray-200 p-2 rounded">
+          <div className="text-red-700 font-medium flex flex-col gap-2">
+            <span>The call will not be successful.</span>
+            {result?.value?.value?.value?.type === "AccountUnmapped" && (
+              <div>
+                <span>This account is not currently mapped.</span>
+                <span className="mt-1">You can map it by running the following command:</span>
+                <pre className="bg-red-50 text-red-800 text-sm p-3 mt-2 rounded-md border border-red-200 whitespace-pre-wrap break-words">
+                  pop call chain --pallet Revive --function map_account --url {rpc} --use-wallet
+                </pre>
+              </div>
+            )}
           </div>
-          <div className="text-red-600 font-bold flex items-center">
-            The call will not be successful. {result?.value?.value?.value?.type === "AccountUnmapped" && "because the account is not mapped."}
-          </div>
-          {result?.value?.value?.value?.type === "AccountUnmapped" && (
-            <div className="mt-3 flex justify-center">
-              <Button
-                onClick={() => onRequestMapAccount?.()}
-                className="bg-pink-700 hover:bg-blue-300 text-white hover:text-gray-800 font-medium"
-              >
-                Map Account
-              </Button>
-            </div>
-          )}
         </div>
       )}
     </div>
@@ -109,7 +105,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
 };
 
 // ContractExecution Component
-const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void, chainProperties: ChainProperties, onRequestMapAccount?: () => void}> = ({ result, originalGas, useGasEstimates, setSuccess, chainProperties, onRequestMapAccount}) => {
+const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void, chainProperties: ChainProperties, rpc: string}> = ({ result, originalGas, useGasEstimates, setSuccess, chainProperties, rpc}) => {
 
   const isSuccess = (result: ContractExecutionResult) => {
     return result.result?.success &&
@@ -203,21 +199,23 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
           The call will be successful.
         </div>
       ) : (
-        <React.Fragment>
-          <div className="text-red-600 font-bold flex items-center">
-            The call will not be successful {result.result?.success && !useGasEstimates && ". Not enough gas provided (use estimates)"} {result.result?.value?.value?.value?.type === "AccountUnmapped" && "because the account is not mapped."}
+         <div className="text-red-700 font-medium flex flex-col gap-2">
+            <span>The call will not be successful.</span>
+        
+            {result.result?.success && !useGasEstimates && (
+              <span>Not enough gas. Try using estimates.</span>
+            )}
+
+            {result.result?.value?.value?.value?.type === "AccountUnmapped" && (
+              <div>
+                <span>Account not mapped. </span>
+                <span className="mt-1">Run this command to fix:</span>
+                <pre className="bg-red-50 text-red-800 text-sm p-3 mt-2 rounded-md border border-red-200 whitespace-pre-wrap break-words">
+                  pop call chain --pallet Revive --function map_account --url {rpc} --use-wallet
+                </pre>
+              </div>
+            )}
           </div>
-          {result.result?.value?.value?.value?.type === "AccountUnmapped" && (
-            <div className="mt-3 flex justify-center">
-              <Button
-                onClick={() => onRequestMapAccount?.()}
-                className="bg-pink-700 hover:bg-blue-300 text-white hover:text-gray-800 font-medium"
-              >
-                Map Account
-              </Button>
-            </div>
-          )}
-          </React.Fragment>
         )}
     </div>
   );
@@ -230,7 +228,7 @@ export function DryRun({
                          callType,
                          originalGas,
                          chainProperties,
-                         onRequestMapAccount
+                         rpc,
                        }: DryRunProps): JSX.Element {
 
   const [success, setSuccess] = React.useState(false);
@@ -295,7 +293,7 @@ export function DryRun({
             `}
             >
               {callType === "upload_code" ? (
-                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} chainProperties={chainProperties}/>
+                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} chainProperties={chainProperties} rpc={rpc}/>
               ) : (
                 <ContractExecution
                   result={dryRunResult as ContractExecutionResult}
@@ -303,7 +301,7 @@ export function DryRun({
                   useGasEstimates={useGasEstimates}
                   setSuccess={setSuccess}
                   chainProperties={chainProperties}
-                  onRequestMapAccount={onRequestMapAccount}
+                  rpc={rpc}
                 />
               )}
             </div>
