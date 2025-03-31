@@ -113,11 +113,12 @@ export const SigningPortal: React.FC = () => {
         setTx(tx);
 
         let pallet = tx.decodedCall.type;
-        setIsContract(pallet === "Contracts" || pallet === "Revive");
+        let isContractPallet = pallet === "Contracts" || pallet === "Revive";
+        setIsContract(isContractPallet);
         setIsChainRegistrar(isRegistrarTransaction(tx));
         
         // Automatically trigger dry run if it's a contract call
-        if (pallet === "Contracts" || pallet === "Revive") {
+        if (isContractPallet) {
           dryRun(tx, api);
         }
         // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
@@ -226,7 +227,7 @@ export const SigningPortal: React.FC = () => {
         // @ts-ignore
         result = await selectedApi.call(
           selectedAccount.address, // origin
-          callType === "Revive" ? args.dest: args.dest.value, // dest
+          callType === "Revive" ? args.dest : args.dest.value, // dest
           args.value, // value
           undefined, // gasLimit
           undefined, // storageDepositLimit
