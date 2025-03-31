@@ -5,6 +5,7 @@ import { Binary } from "polkadot-api";
 import React from "react"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx"
 import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
+import AccountUnmappedMessage from "./AccountUnmappedMessage";
 
 export interface CodeUploadResult {
   type?: string;
@@ -88,15 +89,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
         <div>
           <div className="text-red-700 font-medium flex flex-col gap-2">
             <span>The call will not be successful.</span>
-            {result?.value?.value?.value?.type === "AccountUnmapped" && (
-              <div>
-                <span>This account is not currently mapped.</span>
-                <span className="mt-1">You can map it by running the following command:</span>
-                <pre className="bg-red-50 text-red-800 text-sm p-3 mt-2 rounded-md border border-red-200 whitespace-pre-wrap break-words">
-                  pop call chain --pallet Revive --function map_account --url {rpc} --use-wallet
-                </pre>
-              </div>
-            )}
+              <AccountUnmappedMessage rpc={rpc} />
           </div>
         </div>
       )}
@@ -207,13 +200,7 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
             )}
 
             {result.result?.value?.value?.value?.type === "AccountUnmapped" && (
-              <div>
-                <span>Account not mapped. </span>
-                <span className="mt-1">You can map it by running the following command:</span>
-                <pre className="bg-red-50 text-red-800 text-sm p-3 mt-2 rounded-md border border-red-200 whitespace-pre-wrap break-words">
-                  pop call chain --pallet Revive --function map_account --url {rpc} --use-wallet
-                </pre>
-              </div>
+              <AccountUnmappedMessage rpc={rpc} />
             )}
           </div>
         )}
