@@ -5,6 +5,7 @@ import { Binary } from "polkadot-api";
 import React from "react"
 import { ChevronDown } from "@/components/ui/chevron-down.tsx"
 import { ChainProperties, formatCurrency} from "@/lib/utils.ts"
+import AccountUnmappedMessage from "./AccountUnmappedMessage";
 
 export interface CodeUploadResult {
   type?: string;
@@ -51,10 +52,11 @@ interface DryRunProps {
   setUseGasEstimates: (value: boolean) => void;
   originalGas: {ref_time: bigint, proof_size: number}
   chainProperties: ChainProperties;
+  rpc: string;
 }
 
 // CodeUpload Component
-const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void , chainProperties: ChainProperties}> = ({ result , setSuccess, chainProperties}) => {
+const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: boolean) => void , chainProperties: ChainProperties, rpc: string}> = ({ result , setSuccess, chainProperties, rpc}) => {
   const isSuccess = (result: CodeUploadResult): boolean => {
     return result.success as boolean;
   };
@@ -85,11 +87,9 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
         </div>
       ) : (
         <div>
-          <div className="text-sm bg-gray-200 p-2 rounded">
-            <p>Result: {result.value?.value.value.type}</p>
-          </div>
-          <div className="text-red-600 font-bold flex items-center">
-            The call will not be successful.
+          <div className="text-red-700 font-medium flex flex-col gap-2">
+            <span>The call will not be successful.</span>
+              <AccountUnmappedMessage rpc={rpc} />
           </div>
         </div>
       )}
@@ -98,7 +98,7 @@ const CodeUpload: React.FC<{ result: CodeUploadResult,  setSuccess: (value: bool
 };
 
 // ContractExecution Component
-const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void, chainProperties: ChainProperties}> = ({ result, originalGas, useGasEstimates, setSuccess, chainProperties}) => {
+const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas: {ref_time: bigint, proof_size: number}, useGasEstimates: boolean, setSuccess: (value: boolean) => void, chainProperties: ChainProperties, rpc: string}> = ({ result, originalGas, useGasEstimates, setSuccess, chainProperties, rpc}) => {
 
   const isSuccess = (result: ContractExecutionResult) => {
     return result.result?.success &&
@@ -192,10 +192,18 @@ const ContractExecution: React.FC<{ result: ContractExecutionResult, originalGas
           The call will be successful.
         </div>
       ) : (
-        <div className="text-red-600 font-bold flex items-center">
-          The call will not be successful. {result.result?.success && !useGasEstimates && "Not enough gas provided (use estimates)"}
-        </div>
-      )}
+         <div className="text-red-700 font-medium flex flex-col gap-2">
+            <span>The call will not be successful.</span>
+        
+            {result.result?.success && !useGasEstimates && (
+              <span>Not enough gas. Try using estimates.</span>
+            )}
+
+            {result.result?.value?.value?.value?.type === "AccountUnmapped" && (
+              <AccountUnmappedMessage rpc={rpc} />
+            )}
+          </div>
+        )}
     </div>
   );
 };
@@ -206,7 +214,8 @@ export function DryRun({
                          setUseGasEstimates,
                          callType,
                          originalGas,
-                         chainProperties
+                         chainProperties,
+                         rpc,
                        }: DryRunProps): JSX.Element {
 
   const [success, setSuccess] = React.useState(false);
@@ -271,7 +280,7 @@ export function DryRun({
             `}
             >
               {callType === "upload_code" ? (
-                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} chainProperties={chainProperties}/>
+                <CodeUpload result={dryRunResult as CodeUploadResult} setSuccess={setSuccess} chainProperties={chainProperties} rpc={rpc}/>
               ) : (
                 <ContractExecution
                   result={dryRunResult as ContractExecutionResult}
@@ -279,6 +288,7 @@ export function DryRun({
                   useGasEstimates={useGasEstimates}
                   setSuccess={setSuccess}
                   chainProperties={chainProperties}
+                  rpc={rpc}
                 />
               )}
             </div>

@@ -48,7 +48,6 @@ export const SigningPortal: React.FC = () => {
   const [proxiedAccount, setProxiedAccount] = useState<string | null>(null);
   const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
 
-
   const [modalConfig, setModalConfig] = useState<{
     title: string;
     message: string;
@@ -114,11 +113,12 @@ export const SigningPortal: React.FC = () => {
         setTx(tx);
 
         let pallet = tx.decodedCall.type;
-        setIsContract(pallet === "Contracts");
+        let isContractPallet = pallet === "Contracts" || pallet === "Revive";
+        setIsContract(isContractPallet);
         setIsChainRegistrar(isRegistrarTransaction(tx));
         
         // Automatically trigger dry run if it's a contract call
-        if (pallet === "Contracts") {
+        if (isContractPallet) {
           dryRun(tx, api);
         }
         // Automatically trigger to calculate costs if it's a parachain reserve or a parachain registrar call
@@ -208,7 +208,9 @@ export const SigningPortal: React.FC = () => {
 
   const dryRun = async (tx: UnsafeTransaction<any, string, string, any>, api: UnsafeApi<any>) => {
     let decodedCall = tx?.decodedCall;
-    if (!selectedAccount || decodedCall?.type !== "Contracts") {
+    const callType = decodedCall?.type;
+
+    if (!selectedAccount || (callType !== "Contracts" && callType !== "Revive")) {
       return;
     }
 
@@ -218,13 +220,14 @@ export const SigningPortal: React.FC = () => {
     let salt = args.salt;
 
     let result: ContractExecutionResult | CodeUploadResult | null = null;
+    const selectedApi = callType === "Contracts" ? api?.apis.ContractsApi : api?.apis.ReviveApi;
 
     switch (decodedCall.value.type) {
       case "call":
         // @ts-ignore
-        result = await api?.apis.ContractsApi.call(
+        result = await selectedApi.call(
           selectedAccount.address, // origin
-          args.dest.value, // dest
+          callType === "Revive" ? args.dest : args.dest.value, // dest
           args.value, // value
           undefined, // gasLimit
           undefined, // storageDepositLimit
@@ -234,7 +237,7 @@ export const SigningPortal: React.FC = () => {
 
       case "instantiate_with_code":
         //@ts-ignore
-        result = await api?.apis.ContractsApi.instantiate(
+        result = await selectedApi.instantiate(
           selectedAccount.address, // origin
           args.value, // value
           undefined, // gasLimit
@@ -247,11 +250,11 @@ export const SigningPortal: React.FC = () => {
 
       case "upload_code":
         //@ts-ignore
-        result = await api?.apis.ContractsApi.upload_code(
+        result = await selectedApi.upload_code(
           selectedAccount.address, // origin
           code,
           undefined, // storageDepositLimit
-          Enum("Enforced")
+          callType === "Revive" ? undefined : Enum("Enforced")
         );
         break;
     }
@@ -480,7 +483,7 @@ export const SigningPortal: React.FC = () => {
 
         </div>
 
-        {isContract && dryRunResult && (
+        {isContract && dryRunResult && rpc && (
           <div>
             <DryRun
               dryRunResult={dryRunResult}
@@ -489,6 +492,7 @@ export const SigningPortal: React.FC = () => {
               originalGas={tx?.decodedCall.value.value.gas_limit}
               callType={tx?.decodedCall.value.type}
               chainProperties={chainProperties}
+              rpc={rpc}
             ></DryRun>
           </div>
         )}
