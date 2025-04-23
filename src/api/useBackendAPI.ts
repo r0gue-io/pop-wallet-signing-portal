@@ -9,6 +9,11 @@ export interface Response {
   status: string
 }
 
+export interface SubmitData {
+  signed_payload: string | undefined;
+  contract_address: string | undefined;
+}
+
 // Define types for API responses
 type SubmitResponse = Response;
 
@@ -23,7 +28,7 @@ const useBackendAPI = () => {
   }, []);
 
   const submitData = useCallback(
-    async (data: string | undefined): Promise<SubmitResponse> => {
+    async (data: SubmitData): Promise<SubmitResponse> => {
       const response = await fetch(`${BASE_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
