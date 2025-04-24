@@ -13,8 +13,8 @@ export async function calculateContractAddress(
     salt: string,
   ): Promise<string | undefined> {
     let calculatedAddress: string | undefined = undefined;
-    const acIdEnc = AccountId()[0];
-    const mappedAccount = toEthAddress(acIdEnc(accountId));
+    const accountIdEncoded = AccountId()[0];
+    const mappedAccount = toEthAddress(accountIdEncoded(accountId));
     if (salt) {
         // Use CREATE2
         calculatedAddress = create2(mappedAccount, fromHex(code), data, salt);
@@ -24,7 +24,6 @@ export async function calculateContractAddress(
          // Use CREATE1
         if (nonce !== null) {
             calculatedAddress = create1(mappedAccount, nonce);
-            console.log("calculatedAddress", calculatedAddress);
         }
     }
     return calculatedAddress;
