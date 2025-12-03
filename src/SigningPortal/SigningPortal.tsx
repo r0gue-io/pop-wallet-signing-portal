@@ -23,7 +23,6 @@ import { CodeUploadResult, ContractExecutionResult, DryRun } from "@/DryRun"
 import { ChainProperties } from "@/lib/utils.ts"
 import { InfoIcon } from "@/DryRun/DryRun.tsx"
 import { CostSummary } from "@/CostSummary"
-import { calculateContractAddress } from "@/lib/contractAddress"
 
 export const SigningPortal: React.FC = () => {
   const { fetchPayload, submitData, terminate } = useBackendAPI();
@@ -48,7 +47,6 @@ export const SigningPortal: React.FC = () => {
   const [balanceSelectedAccount, setBalanceSelectedAccount] = useState<bigint | null>(null);
   const [proxiedAccount, setProxiedAccount] = useState<string | null>(null);
   const [proxiedAccountBalance, setProxiedAccountBalance] = useState<bigint | null>(null);
-  const [contractAddress, setContractAddress] = useState<string | undefined>(undefined);
 
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -238,10 +236,6 @@ export const SigningPortal: React.FC = () => {
         break;
 
       case "instantiate_with_code":
-        if (callType === "Revive") {
-          const contractAddress = await calculateContractAddress(api, selectedAccount.address, code, data, salt);
-          setContractAddress(contractAddress);
-        }
         //@ts-ignore
         result = await selectedApi.instantiate(
           selectedAccount.address, // origin
@@ -368,10 +362,7 @@ export const SigningPortal: React.FC = () => {
 
 
     try {
-      let response = await submitData({
-        signed_payload: payload?.toString(),
-        contract_address: contractAddress,
-      });
+      let response = await submitData(payload?.toString());
       if (response.status === "success") {
         setModalConfig({
           title: "Signing Successful",
