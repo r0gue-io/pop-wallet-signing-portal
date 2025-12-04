@@ -360,9 +360,14 @@ export const SigningPortal: React.FC = () => {
       return;
     }
 
+    if (!payload) {
+      setSigning(false);
+      setError("Failed to sign transaction");
+      return;
+    }
 
     try {
-      let response = await submitData(payload?.toString());
+      let response = await submitData(payload.toString());
       if (response.status === "success") {
         setModalConfig({
           title: "Signing Successful",

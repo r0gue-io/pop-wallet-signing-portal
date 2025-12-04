@@ -23,7 +23,7 @@ const useBackendAPI = () => {
   }, []);
 
   const submitData = useCallback(
-    async (data: string | undefined): Promise<SubmitResponse> => {
+    async (data: string): Promise<SubmitResponse> => {
       const response = await fetch(`${BASE_URL}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
